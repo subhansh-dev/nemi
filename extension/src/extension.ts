@@ -60,6 +60,8 @@ export function activate(ctx: vscode.ExtensionContext): void {
     let buffer = '';
     let lastFlush = 0;
     let error: string | undefined;
+    /** Files this turn's agent reported changing, reported to the Brain at the end. */
+    const touched = new Set<string>();
 
     // An isolated session runs inside its own worktree when that worktree
     // exists on this machine; otherwise fall back to the open folder.
@@ -90,6 +92,8 @@ export function activate(ctx: vscode.ExtensionContext): void {
             flush();
           } else if (ev.type === 'session') {
             client.send({ type: 'lane.sessionId', laneId, providerSessionId: ev.id });
+          } else if (ev.type === 'file') {
+            touched.add(ev.path);
           } else if (ev.type === 'error') {
             error = ev.message;
           }
@@ -100,6 +104,9 @@ export function activate(ctx: vscode.ExtensionContext): void {
       error = String(err);
     } finally {
       running.delete(laneId);
+      if (touched.size > 0) {
+        client.send({ type: 'lane.files', laneId, files: [...touched] });
+      }
       // A cancel already settled the lane on the Brain; don't overwrite it.
       if (!ac.signal.aborted) {
         client.send({ type: 'lane.status', laneId, status: error ? 'error' : 'idle', error });

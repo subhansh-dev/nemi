@@ -17,7 +17,8 @@
 - [x] Branch/worktree isolation per session (`nemi/<slug>` under `.nemi/worktrees/`)
 - [ ] Invite by handle / member list
 - [ ] Memories pinned to files/commits, stale-note flagging via git
-- [ ] Files-touched tracking per lane; diff gutter in Mission Control
+- [x] Files-touched tracking per lane, aggregated per session and shown in the panel
+- [ ] Diff gutter in Mission Control
 - [ ] .vsix packaging + marketplace-style install
 
 ## v2 — "steering and safety"

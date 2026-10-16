@@ -48,6 +48,12 @@ export const opencodeProvider: AgentProvider = {
         const p = part as Record<string, any>;
         if (p?.type === 'text' && typeof p.text === 'string') {
           emit(p.text, p.id ? String(p.id) : undefined);
+        } else if (p?.type === 'tool') {
+          const input = (p.state?.input ?? p.input ?? {}) as Record<string, unknown>;
+          const candidate = input.filePath ?? input.file_path ?? input.path;
+          if (typeof candidate === 'string') {
+            opts.onEvent({ type: 'file', path: candidate });
+          }
         }
       }
       if (obj.type === 'text' && typeof obj.text === 'string') {

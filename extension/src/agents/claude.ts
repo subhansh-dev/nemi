@@ -8,6 +8,9 @@ import {
   tryJson,
 } from './util';
 
+/** Tools that change files on disk, feeding the shared files-touched map. */
+const MUTATING_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Update']);
+
 /**
  * Claude Code adapter.
  * `claude -p` is non-interactive; `--output-format stream-json --verbose`
@@ -50,6 +53,11 @@ export const claudeProvider: AgentProvider = {
             opts.onEvent({ type: 'text', text: b.text });
           } else if (b.type === 'tool_use' && b.name) {
             opts.onEvent({ type: 'text', text: `\n› ${b.name}\n` });
+            const input = (block as { input?: Record<string, unknown> }).input;
+            const filePath = input?.file_path ?? input?.notebook_path ?? input?.path;
+            if (typeof filePath === 'string' && MUTATING_TOOLS.has(b.name)) {
+              opts.onEvent({ type: 'file', path: filePath });
+            }
           }
         }
         return;

@@ -4,6 +4,8 @@ export type AgentEvent =
   | { type: 'text'; text: string }
   /** Provider-side conversation id, for resuming the lane later. */
   | { type: 'session'; id: string }
+  /** A file the agent is mutating, for the shared "files touched" map. */
+  | { type: 'file'; path: string }
   | { type: 'error'; message: string };
 
 export interface AgentRunOptions {

@@ -75,6 +75,17 @@ Machines that never created the worktree simply fall back to the folder they hav
 open, so a teammate joining an isolated session is never blocked. Deleting a session
 does not touch git — merging or discarding the branch stays your call.
 
+## Files touched
+
+Each adapter recognises the file mutations its provider reports — write, edit, and
+similar tool calls — and sends the paths to the Brain when the turn ends. The Brain
+merges them into the lane and into the session, deduplicated and capped (200 per lane,
+400 per session, oldest dropped first). Session panels list the most recent twelve as
+chips with the full path on hover; Mission Control shows the count per session.
+
+Paths are *reported*, not *watched*: a file changed by a shell command an agent ran, or
+by you, does not appear. It is a coordination hint, not an audit log.
+
 ## Security
 
 The Brain binds to `127.0.0.1` by default and needs no secret there. Bind it to a

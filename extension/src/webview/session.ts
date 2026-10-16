@@ -1,44 +1,5 @@
 import type { PlanItem, ProviderID, ServerMessage } from '@nemi/shared';
 
-const BODY = `
-<div class="head">
-  <h1 id="title">Session</h1>
-  <span id="branch" class="pill done"></span>
-  <span id="presence" class="users"></span>
-  <span id="status" class="pill live">live</span>
-</div>
-<div id="plan"></div>
-<div id="lanes" class="lanes"></div>
-`;
-
-const CSS = `
-body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-#plan { padding: 6px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
-.planbar { display: flex; align-items: center; gap: 8px; color: var(--fog); }
-.planitem { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
-.planitem input { accent-color: var(--teal); }
-.planitem span { color: var(--mist); }
-.planitem.done span { color: var(--fog); text-decoration: line-through; }
-.lanes { flex: 1; display: flex; gap: 10px; padding: 10px; overflow-x: auto; align-items: stretch; }
-.lane { flex: 1 1 340px; min-width: 320px; max-width: 560px; display: flex; flex-direction: column; background: var(--deep); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.lane.me { border-color: rgba(45,212,191,.35); }
-.lanehead { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-.lanehead .who { font-weight: 600; font-size: 12px; }
-.provider { background: var(--card); color: var(--mist); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; padding: 2px 4px; }
-.iconbtn { background: none; border: none; color: var(--fog); cursor: pointer; padding: 2px 4px; font-size: 13px; }
-.iconbtn:hover { color: var(--coral); }
-.msgs { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-.bubble { padding: 7px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
-.bubble.user { background: rgba(45,212,191,.10); border: 1px solid rgba(45,212,191,.22); }
-.bubble.agent { background: var(--card); border: 1px solid var(--border); }
-.bubble .meta { font-size: 10px; color: var(--fog); margin-bottom: 3px; letter-spacing: .05em; text-transform: uppercase; }
-.bubble.error { border-color: rgba(255,126,103,.5); color: var(--coral); }
-.composer { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--border); }
-.composer textarea { flex: 1; resize: none; background: var(--card); color: var(--mist); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-family: inherit; font-size: 12.5px; min-height: 38px; max-height: 120px; }
-.composer textarea:disabled { opacity: .5; }
-.spin { width: 10px; height: 10px; border: 2px solid rgba(45,212,191,.25); border-top-color: var(--teal); border-radius: 50%; animation: nemi-spin 0.9s linear infinite; }
-@keyframes nemi-spin { to { transform: rotate(360deg); } }
-`;
 
 interface Snap {
   type: 'snapshot';
@@ -67,12 +28,19 @@ function providerName(id: string | null): string {
   return id ? id[0].toUpperCase() + id.slice(1) : 'No agent';
 }
 
+/** Keeps the last two path segments, so a chip stays readable. */
+function shortPath(file: string): string {
+  const parts = file.split(/[\\/]/).filter(Boolean);
+  return parts.length <= 2 ? file : parts.slice(-2).join('/');
+}
+
 function render(): void {
   const titleEl = document.getElementById('title')!;
   const branchEl = document.getElementById('branch')!;
   const statusEl = document.getElementById('status')!;
   const presenceEl = document.getElementById('presence')!;
   const planEl = document.getElementById('plan')!;
+  const filesEl = document.getElementById('files')!;
   const lanesEl = document.getElementById('lanes')!;
 
   const session = sessionId ? state.sessions[sessionId] : null;
@@ -81,6 +49,7 @@ function render(): void {
     branchEl.style.display = 'none';
     statusEl.style.display = 'none';
     planEl.innerHTML = '';
+    filesEl.style.display = 'none';
     lanesEl.innerHTML = '<div class="empty" style="margin:auto">This session has ended.</div>';
     return;
   }
@@ -114,6 +83,17 @@ function render(): void {
         <span>${esc(p.text)}</span>
       </label>`).join('')}
   `;
+
+  // Files the lanes' agents reported changing, newest last. Paths are shown
+  // short (last two segments) with the full path on hover.
+  const touched = session.filesTouched ?? [];
+  filesEl.style.display = touched.length ? '' : 'none';
+  filesEl.innerHTML = touched.length
+    ? `<span style="color:var(--fog)">files touched</span>${touched
+        .slice(-12)
+        .map((file) => `<span class="chip" title="${esc(file)}">${esc(shortPath(file))}</span>`)
+        .join('')}`
+    : '';
 
   const lanes = session.laneIds
     .map((id) => state.lanes[id])

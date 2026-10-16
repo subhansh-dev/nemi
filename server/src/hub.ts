@@ -320,6 +320,34 @@ export class Hub {
         this.persist();
         break;
       }
+      case 'lane.files': {
+        const lane = state.lanes[msg.laneId];
+        if (!lane) {
+          return;
+        }
+        const laneFiles = new Set(lane.filesTouched ?? []);
+        const session = state.sessions[lane.sessionId];
+        const sessionFiles = new Set(session?.filesTouched ?? []);
+        for (const file of msg.files) {
+          if (typeof file !== 'string' || !file.trim()) {
+            continue;
+          }
+          laneFiles.add(file);
+          sessionFiles.add(file);
+        }
+        lane.filesTouched = [...laneFiles].slice(-200);
+        lane.updatedAt = Date.now();
+        if (session) {
+          session.filesTouched = [...sessionFiles].slice(-400);
+          session.updatedAt = Date.now();
+        }
+        this.persist();
+        this.broadcast({ type: 'lane.upsert', lane });
+        if (session) {
+          this.broadcast({ type: 'session.upsert', session });
+        }
+        break;
+      }
       case 'lane.status': {
         const lane = state.lanes[msg.laneId];
         if (!lane) {

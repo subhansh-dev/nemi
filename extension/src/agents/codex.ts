@@ -69,6 +69,18 @@ export const codexProvider: AgentProvider = {
           emitText(item.text, String(item.id ?? item.item_id ?? ''));
         } else if (kind === 'command_execution' && item.status === 'completed' && typeof item.command === 'string') {
           opts.onEvent({ type: 'text', text: `\n› ${item.command}\n` });
+        } else if (kind === 'file_change' || kind === 'patch') {
+          const changes = (item.changes ?? item.files ?? []) as unknown[];
+          for (const change of changes) {
+            const record = change as Record<string, unknown> | null;
+            const candidate =
+              typeof change === 'string'
+                ? change
+                : record?.path ?? record?.file ?? record?.file_path;
+            if (typeof candidate === 'string') {
+              opts.onEvent({ type: 'file', path: candidate });
+            }
+          }
         }
       }
     });

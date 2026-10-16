@@ -12,6 +12,7 @@ const BODY = `
   <span id="status" class="pill live">live</span>
 </div>
 <div id="plan"></div>
+<div id="files"></div>
 <div id="lanes" class="lanes"></div>
 `;
 
@@ -22,6 +23,8 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .planitem { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
 .planitem input { accent-color: var(--teal); }
 .planitem.done span { color: var(--fog); text-decoration: line-through; }
+#files { padding: 6px 12px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; }
+#files .chip { border: 1px solid var(--border); color: var(--fog); border-radius: 999px; padding: 1px 7px; font-size: 10.5px; }
 .lanes { flex: 1; display: flex; gap: 10px; padding: 10px; overflow-x: auto; align-items: stretch; }
 .lane { flex: 1 1 340px; min-width: 320px; max-width: 560px; display: flex; flex-direction: column; background: var(--deep); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .lane.me { border-color: rgba(45,212,191,.35); }

@@ -46,6 +46,8 @@ export interface Lane {
   messages: LaneMessage[];
   /** Provider-side conversation id, for resuming. */
   providerSessionId?: string;
+  /** Files this lane's agent touched, as reported by the executing client. */
+  filesTouched?: string[];
   lastError?: string;
   createdAt: number;
   updatedAt: number;
@@ -105,6 +107,8 @@ export type ClientMessage =
   | { type: 'lane.delta'; sessionId: string; laneId: string; text: string }
   /** Owner reports a fresh provider conversation id. */
   | { type: 'lane.sessionId'; laneId: string; providerSessionId: string }
+  /** Owner reports which files its agent touched this turn. */
+  | { type: 'lane.files'; laneId: string; files: string[] }
   | { type: 'lane.status'; laneId: string; status: LaneStatus; error?: string }
   | { type: 'lane.cancel'; laneId: string }
   | {

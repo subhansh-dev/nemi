@@ -34,6 +34,9 @@ the owner, so you learn who is who without reading names.
 so two sessions can never quietly edit the same files. Untick the box and it runs in
 the folder you already have open.
 
+**Files** — each lane reports the files its agent changed, folded into one list per
+session. It is the fastest way to notice that two lanes are drifting into the same file.
+
 **Brain** — shared memory in three flavors: decisions, gotchas, conventions. Add one from
 the command palette (`Nemi: Add Brain Memory`), see them grouped in the sidebar. It is
 deliberately small. This is not a notes app.
