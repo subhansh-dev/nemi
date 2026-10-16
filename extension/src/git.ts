@@ -47,3 +47,33 @@ export async function createWorktree(repoDir: string, slug: string): Promise<Wor
   await run('git', ['worktree', 'add', '-b', branch, worktreePath], { cwd: repoDir });
   return { path: worktreePath, branch };
 }
+
+/** Current HEAD, or null outside a repository (or before the first commit). */
+export async function headCommit(dir: string): Promise<string | null> {
+  try {
+    const { stdout } = await run('git', ['rev-parse', 'HEAD'], { cwd: dir });
+    return stdout.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * True when `file` was touched by a commit after `commit`. Returns false when
+ * the answer is unknown — a rebased-away commit, a missing file, no git at all.
+ * A note is never marked stale on a guess.
+ */
+export async function fileChangedSince(
+  dir: string,
+  commit: string,
+  file: string,
+): Promise<boolean> {
+  try {
+    const { stdout } = await run('git', ['log', '--oneline', `${commit}..HEAD`, '--', file], {
+      cwd: dir,
+    });
+    return stdout.trim().length > 0;
+  } catch {
+    return false;
+  }
+}

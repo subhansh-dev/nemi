@@ -20,7 +20,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
   });
   const mission = new MissionControlView(client, ctx.extensionUri);
   const sessions = new SessionViews(client, ctx.extensionUri);
-  const brain = new BrainView(client);
+  const brain = new BrainView(client, workspaceDir);
 
   /** Lanes this window is currently executing. */
   const running = new Map<string, AbortController>();

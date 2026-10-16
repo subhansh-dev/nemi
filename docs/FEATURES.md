@@ -54,8 +54,14 @@ see Security below.
 ## Brain memories
 
 Three kinds: `decision`, `gotcha`, `convention`. Stored in the Brain's state file,
-listed in the sidebar tree, removable from the context menu. Free-floating for now;
-pinning memories to files and commits is next.
+listed in the sidebar tree, removable from the context menu.
+
+A memory can be **pinned** to a workspace-relative file. Creating one while a file is
+open offers the pin and records the current HEAD with it. Clients that have the repo
+then check, once per memory, whether that file was touched by any commit since — if it
+was, the entry is marked `changed` in the sidebar and its tooltip says so. Clients
+without the repo just show the note. The check is advisory: a rebased-away commit or a
+missing file reads as "unknown", never as "stale".
 
 ## Persistence and fail-open
 

@@ -388,6 +388,7 @@ export class Hub {
           kind: msg.kind,
           text: msg.text,
           file: msg.file,
+          commit: msg.commit,
           authorId: user.id,
           createdAt: Date.now(),
         };

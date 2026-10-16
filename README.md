@@ -38,8 +38,9 @@ the folder you already have open.
 session. It is the fastest way to notice that two lanes are drifting into the same file.
 
 **Brain** — shared memory in three flavors: decisions, gotchas, conventions. Add one from
-the command palette (`Nemi: Add Brain Memory`), see them grouped in the sidebar. It is
-deliberately small. This is not a notes app.
+the command palette (`Nemi: Add Brain Memory`), see them grouped in the sidebar. Pin one
+to the file you have open and it gets flagged once that code moves on. Deliberately small.
+This is not a notes app.
 
 **Three agents** — Claude Code, Codex, OpenCode. Pick one per lane, switch whenever.
 They sit side by side; nothing forces the team onto a single vendor.

@@ -77,8 +77,10 @@ export interface BrainMemory {
   id: string;
   kind: MemoryKind;
   text: string;
-  /** Optional path this memory is about. Pinned memory arrives in v1. */
+  /** Workspace-relative path this memory is about, when it was pinned to one. */
   file?: string;
+  /** HEAD at the time of pinning, so clients can flag notes that outlived the code. */
+  commit?: string;
   authorId: string;
   createdAt: number;
 }
@@ -124,7 +126,15 @@ export type ClientMessage =
   | { type: 'lane.create'; sessionId: string; provider?: ProviderID }
   | { type: 'lane.setProvider'; laneId: string; provider: ProviderID }
   | { type: 'lane.remove'; laneId: string }
-  | { type: 'brain.add'; kind: MemoryKind; text: string; file?: string }
+  | {
+      type: 'brain.add';
+      kind: MemoryKind;
+      text: string;
+      /** Workspace-relative file to pin this memory to. */
+      file?: string;
+      /** HEAD at the moment of pinning. */
+      commit?: string;
+    }
   | { type: 'brain.remove'; id: string };
 
 /* ------------------------------------------------------------------ */
