@@ -1,0 +1,22 @@
+#!/bin/sh
+# Nemi commit guard (message).
+#
+# Blocks a commit whose message matches a pattern in the local denylist at
+# .git/nemi-forbidden-patterns. The denylist is untracked by design.
+#
+# Enable for this clone with:  git config core.hooksPath .githooks
+
+msgfile="$1"
+list="$(git rev-parse --git-dir)/nemi-forbidden-patterns"
+[ -f "$list" ] || exit 0
+
+pattern="$(grep -v '^[[:space:]]*$' "$list" | paste -sd '|' -)"
+[ -n "$pattern" ] || exit 0
+
+if grep -Ei "$pattern" "$msgfile" >/dev/null 2>&1; then
+  echo "nemi: commit-msg blocked - the message matches a forbidden pattern." >&2
+  grep -Ein "$pattern" "$msgfile" | head -5 >&2
+  exit 1
+fi
+
+exit 0
