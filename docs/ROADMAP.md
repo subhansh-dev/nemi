@@ -1,16 +1,20 @@
 # Nemi roadmap
 
-## v0 — "one machine, one session, live" (current)
+## v0 — "one machine, one session, live"
+
+Written and building cleanly; not yet exercised end to end. The runtime checks are
+deliberately deferred until there is headroom on the dev machine, so treat the boxes
+below as "code complete", not "proven".
 
 - [x] Repo scaffold, protocol, docs
-- [ ] Brain server: sessions, lanes, presence, memories, persistence
-- [ ] Mission Control sidebar (live session cards)
-- [ ] Session view: lane columns, shared plan, streaming responses
-- [ ] Agent adapters: Claude Code, Codex, OpenCode (stdin dispatch, streaming)
-- [ ] Brain view: shared memories
-- [ ] Auto-start Brain from the extension
+- [x] Brain server: sessions, lanes, presence, memories, persistence
+- [x] Mission Control sidebar (live session cards)
+- [x] Session view: lane columns, shared plan, streaming responses
+- [x] Agent adapters: Claude Code, Codex, OpenCode (stdin dispatch, streaming)
+- [x] Brain view: shared memories
+- [x] Auto-start Brain from the extension
 
-## v1 — "shared for real"
+## v1 — "shared for real" (current)
 
 - [x] Auth token (`--token` / `NEMI_TOKEN`) and network binding (`--host` / `NEMI_HOST`),
       with non-loopback binds refused unless a token is set
