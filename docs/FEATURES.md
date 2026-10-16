@@ -100,6 +100,13 @@ chips with the full path on hover; Mission Control shows the count per session.
 Paths are *reported*, not *watched*: a file changed by a shell command an agent ran, or
 by you, does not appear. It is a coordination hint, not an audit log.
 
+Isolated sessions also get a **diff gutter** on their Mission Control card: the
+uncommitted change volume of that session's worktree (`+insertions −deletions`, files
+changed), measured locally by the client that has the worktree and refreshed at most
+every few seconds. Sessions sharing the open folder show nothing, because every card
+would report the same numbers and mean nothing by it. The count covers tracked files
+only — `git diff` does not see untracked ones.
+
 ## Security
 
 The Brain binds to `127.0.0.1` by default and needs no secret there. Bind it to a

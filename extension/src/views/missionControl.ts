@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { ServerMessage } from '@nemi/shared';
 import type { BrainClient } from '../brainClient';
+import { diffStat, type DiffStat } from '../git';
 import { htmlShell } from './html';
 
 const BODY = `
@@ -37,6 +38,8 @@ export class MissionControlView implements vscode.WebviewViewProvider {
   static readonly id = 'nemi.missionControl';
   private view?: vscode.WebviewView;
   private disposables: vscode.Disposable[] = [];
+  /** Change volume per worktree, refreshed at most every few seconds. */
+  private readonly diffCache = new Map<string, { at: number; stat: DiffStat | null }>();
 
   constructor(
     private readonly client: BrainClient,
@@ -58,28 +61,54 @@ export class MissionControlView implements vscode.WebviewViewProvider {
       this.client.sub('message', (msg: ServerMessage) => {
         void view.webview.postMessage({ type: 'server', msg });
       }),
-      this.client.sub('state', () => this.push()),
-      this.client.sub('connected', () => this.push()),
+      this.client.sub('state', () => void this.push()),
+      this.client.sub('connected', () => void this.push()),
     );
   }
 
   refresh(): void {
-    this.push();
+    void this.push();
   }
 
-  private push(): void {
+  private async diffFor(dir: string): Promise<DiffStat | null> {
+    const hit = this.diffCache.get(dir);
+    const now = Date.now();
+    if (hit && now - hit.at < 3000) {
+      return hit.stat;
+    }
+    const stat = await diffStat(dir);
+    this.diffCache.set(dir, { at: now, stat });
+    return stat;
+  }
+
+  private async push(): Promise<void> {
+    const state = this.client.state;
+    const diffs: Record<string, DiffStat> = {};
+    for (const session of Object.values(state.sessions)) {
+      // Only an isolated session has a tree of its own to measure. Sessions
+      // sharing the open folder would all report the same numbers, which would
+      // say nothing, so they show no gutter.
+      if (!session.worktreePath) {
+        continue;
+      }
+      const stat = await this.diffFor(session.worktreePath);
+      if (stat) {
+        diffs[session.id] = stat;
+      }
+    }
     void this.view?.webview.postMessage({
       type: 'snapshot',
-      state: this.client.state,
+      state,
       you: this.client.you,
       connected: this.client.connected,
+      diffs,
     });
   }
 
   private onMessage(m: { type?: string; id?: string }): void {
     switch (m.type) {
       case 'ready':
-        this.push();
+        void this.push();
         break;
       case 'newSession':
         void vscode.commands.executeCommand('nemi.newSession');

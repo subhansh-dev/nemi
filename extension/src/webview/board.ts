@@ -7,6 +7,8 @@ const vscodeApi = acquireVsCodeApi();
 let state: NemiState = { users: {}, sessions: {}, lanes: {}, memories: [] };
 let you: NemiUser | null = null;
 let connected = false;
+/** Uncommitted change volume per isolated session, measured by the extension. */
+let diffs: Record<string, { files: number; insertions: number; deletions: number }> = {};
 
 function esc(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -69,6 +71,7 @@ function render(): void {
             </span>`;
           }).join('')}
           ${s.branch ? `<span class="chip">⎇ ${esc(s.branch)}</span>` : ''}
+          ${diffs[s.id] ? `<span class="chip" title="uncommitted changes in this session's worktree"><span style="color:var(--teal)">+${diffs[s.id].insertions}</span> <span style="color:var(--coral)">−${diffs[s.id].deletions}</span> · ${diffs[s.id].files} file${diffs[s.id].files === 1 ? '' : 's'}</span>` : ''}
           ${s.filesTouched.length ? `<span class="chip">${s.filesTouched.length} file${s.filesTouched.length > 1 ? 's' : ''}</span>` : ''}
           <span class="users">
             ${[...participants].map((uid) => {
@@ -85,12 +88,19 @@ function render(): void {
 
 window.addEventListener('message', (event) => {
   const data = event.data as
-    | { type: 'snapshot'; state: NemiState; you: NemiUser | null; connected: boolean }
+    | {
+        type: 'snapshot';
+        state: NemiState;
+        you: NemiUser | null;
+        connected: boolean;
+        diffs?: Record<string, { files: number; insertions: number; deletions: number }>;
+      }
     | { type: 'server'; msg: ServerMessage };
   if (data.type === 'snapshot') {
     state = data.state;
     you = data.you;
     connected = data.connected;
+    diffs = data.diffs ?? {};
     render();
   } else if (data.type === 'server') {
     const msg = data.msg;

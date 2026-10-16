@@ -77,3 +77,34 @@ export async function fileChangedSince(
     return false;
   }
 }
+
+export interface DiffStat {
+  files: number;
+  insertions: number;
+  deletions: number;
+}
+
+/**
+ * Uncommitted change volume in `dir`, or null when the tree is clean (or not a
+ * repo). Tracked files only — `git diff` never counts untracked ones, so a
+ * brand-new file appears only once it is added.
+ */
+export async function diffStat(dir: string): Promise<DiffStat | null> {
+  try {
+    const { stdout } = await run('git', ['diff', '--shortstat', 'HEAD'], { cwd: dir });
+    const text = stdout.trim();
+    if (!text) {
+      return null;
+    }
+    const files = /(\d+) files? changed/.exec(text);
+    const insertions = /(\d+) insertions?/.exec(text);
+    const deletions = /(\d+) deletions?/.exec(text);
+    return {
+      files: files ? Number(files[1]) : 0,
+      insertions: insertions ? Number(insertions[1]) : 0,
+      deletions: deletions ? Number(deletions[1]) : 0,
+    };
+  } catch {
+    return null;
+  }
+}

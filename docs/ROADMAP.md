@@ -19,7 +19,7 @@
 - [x] Copy-invite command that writes the join settings and the Brain start command
 - [x] Memories pinned to files and commits, with advisory stale flagging via git
 - [x] Files-touched tracking per lane, aggregated per session and shown in the panel
-- [ ] Diff gutter in Mission Control
+- [x] Diff gutter in Mission Control (change volume per isolated session worktree)
 - [ ] .vsix packaging + marketplace-style install
 
 ## v2 — "steering and safety"
