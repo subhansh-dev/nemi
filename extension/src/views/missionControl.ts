@@ -9,6 +9,7 @@ const BODY = `
   <span id="whoami" style="color:var(--fog);font-size:11px"></span>
   <span id="conn" class="dot" title="Brain connection"></span>
 </div>
+<div id="roster" class="roster"></div>
 <div id="cards"></div>
 <div style="padding:12px"><button class="primary" id="new" style="width:100%">＋ New Session</button></div>
 `;
@@ -25,6 +26,11 @@ const CSS = `
 .users { display: flex; gap: 4px; margin-left: auto; }
 .udot { width: 8px; height: 8px; border-radius: 50%; }
 .udot.off { opacity: .3; }
+.roster { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px 0; }
+.member { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; font-size: 11px; color: var(--mist); }
+.member.off { opacity: .45; }
+.member.invite { color: var(--teal); border-color: rgba(45,212,191,.35); cursor: pointer; }
+.member.invite:hover { background: rgba(45,212,191,.08); }
 `;
 
 export class MissionControlView implements vscode.WebviewViewProvider {
@@ -82,6 +88,9 @@ export class MissionControlView implements vscode.WebviewViewProvider {
         if (m.id) {
           void vscode.commands.executeCommand('nemi.openSession', m.id);
         }
+        break;
+      case 'invite':
+        void vscode.commands.executeCommand('nemi.copyInvite');
         break;
     }
   }

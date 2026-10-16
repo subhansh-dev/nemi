@@ -25,6 +25,20 @@ function render(): void {
     return;
   }
   const sessions = Object.values(state.sessions).sort((a, b) => b.createdAt - a.createdAt);
+
+  const roster = document.getElementById('roster');
+  if (roster) {
+    const members = Object.values(state.users).sort((a, b) => a.name.localeCompare(b.name));
+    roster.innerHTML =
+      members
+        .map(
+          (u) => `<span class="member${u.connected ? '' : ' off'}" title="${esc(u.name)}${
+            u.connected ? ' — connected' : ' — offline'
+          }"><span class="udot" style="background:${esc(u.color)}"></span>${esc(u.name)}</span>`,
+        )
+        .join('') + `<span class="member invite" data-invite>＋ invite</span>`;
+  }
+
   if (sessions.length === 0) {
     cards.innerHTML = `<div class="empty">No live sessions yet.<br>Start one and invite your team — every lane runs its own agent, live.</div>`;
     return;
@@ -123,6 +137,10 @@ document.addEventListener('click', (e) => {
   }
   if ((e.target as HTMLElement).id === 'new') {
     vscodeApi.postMessage({ type: 'newSession' });
+    return;
+  }
+  if ((e.target as HTMLElement).closest('[data-invite]')) {
+    vscodeApi.postMessage({ type: 'invite' });
   }
 });
 

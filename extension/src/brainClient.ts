@@ -25,6 +25,8 @@ export interface BrainOptions {
   token?: string;
   /** Connect to a remote Brain instead of starting a local one. */
   brainUrl?: string;
+  /** Name teammates see; also the handle an invite matches on. */
+  userName?: string;
   /** Directory the local Brain keeps its state beside. */
   workspaceDir: string;
 }
@@ -43,6 +45,7 @@ export class BrainClient extends EventEmitter {
   private readonly port: number;
   private readonly token: string;
   private readonly brainUrl: string;
+  private readonly userName: string;
   private readonly workspaceDir: string;
   private ws: WebSocket | null = null;
   private brainProc: ChildProcess | null = null;
@@ -53,6 +56,7 @@ export class BrainClient extends EventEmitter {
     this.port = options.port;
     this.token = options.token?.trim() ?? '';
     this.brainUrl = options.brainUrl?.trim() ?? '';
+    this.userName = options.userName?.trim() ?? '';
     this.workspaceDir = options.workspaceDir;
   }
 
@@ -105,6 +109,25 @@ export class BrainClient extends EventEmitter {
     await sleep(400);
     this.closed = false;
     await this.start();
+  }
+
+  /**
+   * Drop the socket and join again without touching the Brain process — for
+   * changes like the display name that are only read when the socket opens.
+   */
+  reconnect(): void {
+    const ws = this.ws;
+    this.ws = null;
+    if (ws) {
+      // Detach first, or the close handler schedules its own retry as well.
+      ws.removeAllListeners('close');
+      ws.close();
+    }
+    this.connected = false;
+    this.emit('connected', false);
+    if (!this.closed) {
+      setTimeout(() => this.connect(), 300).unref();
+    }
   }
 
   private httpBase(): string {
@@ -162,7 +185,8 @@ export class BrainClient extends EventEmitter {
     this.ws = ws;
 
     ws.on('open', () => {
-      const name = os.userInfo().username || process.env.USERNAME || 'guest';
+      const name =
+        this.userName || os.userInfo().username || process.env.USERNAME || 'guest';
       ws.send(
         JSON.stringify({
           type: 'identify',

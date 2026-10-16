@@ -382,6 +382,30 @@ export class Hub {
         this.broadcast({ type: 'lane.upsert', lane });
         break;
       }
+      case 'member.add': {
+        const handle = msg.handle.trim().slice(0, 40);
+        if (!handle) {
+          return;
+        }
+        const member = userForName(handle, state.users);
+        if (!state.users[member.id]) {
+          state.users[member.id] = { ...member, connected: false };
+          this.persist();
+          this.broadcastPresence();
+        }
+        break;
+      }
+      case 'member.remove': {
+        const target = state.users[msg.id];
+        // A live identity is presence's business, not the roster's: refuse to
+        // delete someone who is connected right now.
+        if (target && !target.connected) {
+          delete state.users[msg.id];
+          this.persist();
+          this.broadcastPresence();
+        }
+        break;
+      }
       case 'brain.add': {
         const memory: BrainMemory = {
           id: id('mem'),

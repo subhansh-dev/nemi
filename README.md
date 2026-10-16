@@ -28,6 +28,9 @@ plan progress, which lanes are currently running.
 account. Teammates can watch it type, send it a prompt, or hit stop. Lane color follows
 the owner, so you learn who is who without reading names.
 
+**Roster** — add teammates by handle before they ever open the editor. They sit dimmed
+in Mission Control and light up when they connect. One button copies the join details.
+
 **Plans** — a checklist per session, shared. Checkboxes move for everyone at once.
 
 **Isolation** — a session can run in its own git worktree on a `nemi/<name>` branch,
@@ -108,11 +111,13 @@ Code extension is on the other end; anything that can open a websocket can be a 
 ## What works today, honestly
 
 Works: multiple windows sharing sessions, live lane streaming, per-lane provider
-switching, memories, auto-start of the Brain, state surviving restarts, optional
-worktree isolation per session, and token auth for a Brain that lives on the network.
+switching, memories, a roster you can build before a teammate joins, auto-start of the
+Brain, state surviving restarts, optional worktree isolation per session, and token
+auth for a Brain that lives on the network.
 
-Rough edges: no per-user accounts (the token is a single shared secret, and identity is
-still just a username), no mid-turn steering, transcripts cap at 400 messages per lane,
+Rough edges: no per-user accounts (the token is a single shared secret, identity is
+still just a name, and a roster entry only links to a person once they connect under
+the handle you added), no mid-turn steering, transcripts cap at 400 messages per lane,
 and the adapter parsers carry fallback branches because provider event schemas shift
 between releases.
 
@@ -128,6 +133,7 @@ Settings (VS Code):
 | `nemi.port` | 4877 | Port for the local Brain |
 | `nemi.brainUrl` | *(empty)* | Join a Brain someone else runs, e.g. `ws://10.0.0.5:4877` |
 | `nemi.token` | *(empty)* | Shared secret when the Brain requires one |
+| `nemi.userName` | *(OS username)* | The name teammates see, and the handle an invite matches on |
 
 Environment variables (standalone `npm run brain`):
 

@@ -15,7 +15,8 @@
 - [x] Auth token (`--token` / `NEMI_TOKEN`) and network binding (`--host` / `NEMI_HOST`),
       with non-loopback binds refused unless a token is set
 - [x] Branch/worktree isolation per session (`nemi/<slug>` under `.nemi/worktrees/`)
-- [ ] Invite by handle / member list
+- [x] Invite by handle / member roster (entries created ahead of a teammate joining)
+- [x] Copy-invite command that writes the join settings and the Brain start command
 - [x] Memories pinned to files and commits, with advisory stale flagging via git
 - [x] Files-touched tracking per lane, aggregated per session and shown in the panel
 - [ ] Diff gutter in Mission Control

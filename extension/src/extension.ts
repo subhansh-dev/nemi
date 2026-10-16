@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import * as vscode from 'vscode';
 import { portFromEnv, type ProviderID, type ServerMessage } from '@nemi/shared';
 import { PROVIDERS, PROVIDER_ORDER } from './agents';
@@ -16,6 +17,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     port: cfg.get<number>('port') || portFromEnv(process.env),
     token: cfg.get<string>('token') || process.env.NEMI_TOKEN || '',
     brainUrl: cfg.get<string>('brainUrl') || '',
+    userName: cfg.get<string>('userName') || '',
     workspaceDir,
   });
   const mission = new MissionControlView(client, ctx.extensionUri);
@@ -222,6 +224,50 @@ export function activate(ctx: vscode.ExtensionContext): void {
     sessions.open(sessionId);
   }
 
+  /** First non-internal IPv4 address, used to write a joinable invite. */
+  function lanAddress(): string {
+    for (const list of Object.values(os.networkInterfaces())) {
+      for (const net of list ?? []) {
+        if (net.family === 'IPv4' && !net.internal) {
+          return net.address;
+        }
+      }
+    }
+    return '127.0.0.1';
+  }
+
+  async function inviteMember(): Promise<void> {
+    const handle = await vscode.window.showInputBox({
+      prompt: 'Teammate handle',
+      placeHolder: 'e.g. priya — the name they set as nemi.userName',
+    });
+    if (!handle?.trim()) {
+      return;
+    }
+    client.send({ type: 'member.add', handle: handle.trim() });
+    void vscode.window.showInformationMessage(
+      `Nemi: ${handle.trim()} is on the roster and will light up when they join.`,
+    );
+  }
+
+  async function copyInvite(): Promise<void> {
+    const token = cfg.get<string>('token') || '';
+    const port = cfg.get<number>('port') || portFromEnv(process.env);
+    const url = client.isRemote ? client.wsUrl : `ws://${lanAddress()}:${port}`;
+    const lines = [
+      'Join my Nemi Brain.',
+      '',
+      `  nemi.brainUrl = ${url}`,
+      `  nemi.token    = ${token || '<none — only reachable on the same machine>'}`,
+      '  nemi.userName = <the handle you were added under>',
+      '',
+      'If nothing is listening yet, one of us starts it first:',
+      `  npm run brain -- --host 0.0.0.0 --token ${token || '<pick-a-secret>'}`,
+    ];
+    await vscode.env.clipboard.writeText(lines.join('\n'));
+    void vscode.window.showInformationMessage('Nemi: invite copied to the clipboard.');
+  }
+
   /* ------------------------------ wiring -------------------------------- */
 
   ctx.subscriptions.push(
@@ -249,14 +295,24 @@ export function activate(ctx: vscode.ExtensionContext): void {
       }
     }),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      // Port, remote URL or token changed — re-join under the new settings.
-      if (e.affectsConfiguration('nemi')) {
+      // Port, remote URL and token are read at startup, so they need a fresh
+      // join. The display name is only read when the socket opens, so a plain
+      // reconnect is enough — no reason to disturb a running Brain.
+      const needsBrain =
+        e.affectsConfiguration('nemi.port') ||
+        e.affectsConfiguration('nemi.brainUrl') ||
+        e.affectsConfiguration('nemi.token');
+      if (needsBrain) {
         void client.restart();
+      } else if (e.affectsConfiguration('nemi.userName')) {
+        client.reconnect();
       }
     }),
     vscode.commands.registerCommand('nemi.newSession', newSession),
     vscode.commands.registerCommand('nemi.openSession', openSession),
     vscode.commands.registerCommand('nemi.addLane', addLane),
+    vscode.commands.registerCommand('nemi.inviteMember', inviteMember),
+    vscode.commands.registerCommand('nemi.copyInvite', copyInvite),
     vscode.commands.registerCommand('nemi.addMemory', () => brain.addMemory()),
     vscode.commands.registerCommand('nemi.removeMemory', (item) => brain.removeMemory(item)),
     vscode.commands.registerCommand('nemi.restartBrain', async () => {

@@ -135,7 +135,11 @@ export type ClientMessage =
       /** HEAD at the moment of pinning. */
       commit?: string;
     }
-  | { type: 'brain.remove'; id: string };
+  | { type: 'brain.remove'; id: string }
+  /** Roster: add a teammate by handle so they appear before they connect. */
+  | { type: 'member.add'; handle: string }
+  /** Roster: drop a teammate who is not connected right now. */
+  | { type: 'member.remove'; id: string };
 
 /* ------------------------------------------------------------------ */
 /* Server → client                                                     */

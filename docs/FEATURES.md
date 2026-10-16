@@ -47,9 +47,17 @@ like you would treat any agent with write access to your working tree.
 
 ## Presence
 
-Connected members appear in Mission Control and in session panels with a stable
-color derived from their username. That is cosmetic identity, not authentication —
-see Security below.
+Members appear in Mission Control: a roster of everyone added, plus a colored dot
+wherever they act inside a session. Identity comes from the name sent in `identify` —
+the `nemi.userName` setting, falling back to the operating-system username — so
+reconnects keep the same id and color, and a person's color follows them everywhere.
+
+`Nemi: Add Teammate to Roster` creates an entry before they ever connect, so they show
+up dimmed and light up on arrival. `Nemi: Copy Invite to Clipboard` writes the
+`nemi.brainUrl`, `nemi.token` and handle they need, plus the command to start a Brain if
+nothing is listening yet. A roster entry links to a person only when they connect under
+the handle you added: there are no accounts here, only names. That is cosmetic identity,
+not authentication — see Security below.
 
 ## Brain memories
 

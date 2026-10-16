@@ -55,6 +55,11 @@
           "type": "string",
           "default": "",
           "description": "Shared secret when the Brain requires one (started with a token, or bound to a network address). Leave empty for a local, open Brain."
+        },
+        "nemi.userName": {
+          "type": "string",
+          "default": "",
+          "description": "The name teammates see, and the handle an invite matches on. Defaults to your operating-system username."
         }
       }
     },
@@ -70,6 +75,16 @@
       {
         "command": "nemi.addLane",
         "title": "Nemi: Add Lane to Session"
+      },
+      {
+        "command": "nemi.inviteMember",
+        "title": "Nemi: Add Teammate to Roster",
+        "icon": "$(person-add)"
+      },
+      {
+        "command": "nemi.copyInvite",
+        "title": "Nemi: Copy Invite to Clipboard",
+        "icon": "$(link)"
       },
       {
         "command": "nemi.addMemory",
@@ -88,6 +103,16 @@
       "view/title": [
         {
           "command": "nemi.newSession",
+          "when": "view == nemi.missionControl",
+          "group": "navigation"
+        },
+        {
+          "command": "nemi.copyInvite",
+          "when": "view == nemi.missionControl",
+          "group": "navigation"
+        },
+        {
+          "command": "nemi.inviteMember",
           "when": "view == nemi.missionControl",
           "group": "navigation"
         },
