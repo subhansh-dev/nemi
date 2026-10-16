@@ -18,6 +18,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** Upper bound on actions held while the socket is down. */
+const MAX_OUTBOX = 100;
+
 export interface BrainOptions {
   /** Local port used when no remote Brain URL is configured. */
   port: number;
@@ -50,6 +53,8 @@ export class BrainClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private brainProc: ChildProcess | null = null;
   private closed = false;
+  /** Actions typed while the socket was down; delivered on rejoin. */
+  private outbox: ClientMessage[] = [];
 
   constructor(options: BrainOptions) {
     super();
@@ -93,6 +98,7 @@ export class BrainClient extends EventEmitter {
 
   stop(): void {
     this.closed = true;
+    this.outbox = [];
     this.ws?.close();
     this.brainProc?.kill();
   }
@@ -205,6 +211,9 @@ export class BrainClient extends EventEmitter {
       }
       if (msg.type === 'hello') {
         this.you = msg.you;
+        // The Brain has accepted our identity, so anything typed while the
+        // socket was down can be delivered without landing on a stranger.
+        this.flushOutbox();
       }
       applyServerMessage(this.state, msg);
       if (msg.type === 'presence' || msg.type === 'hello') {
@@ -246,7 +255,39 @@ export class BrainClient extends EventEmitter {
   send(msg: ClientMessage): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
+      return;
     }
+    // The socket can be down for a moment while the Brain restarts. Hold the
+    // action and deliver it on rejoin instead of dropping it on the floor.
+    // Deltas for the same lane coalesce, so a long turn streaming while the
+    // socket is out cannot fill the box by itself.
+    const last = this.outbox[this.outbox.length - 1];
+    if (
+      msg.type === 'lane.delta' &&
+      last &&
+      last.type === 'lane.delta' &&
+      last.laneId === msg.laneId
+    ) {
+      last.text += msg.text;
+      return;
+    }
+    this.outbox.push(msg);
+    if (this.outbox.length > MAX_OUTBOX) {
+      this.outbox.splice(0, this.outbox.length - MAX_OUTBOX);
+    }
+  }
+
+  /** Delivers held actions, oldest first. Emits `replayed` with the count. */
+  private flushOutbox(): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || this.outbox.length === 0) {
+      return;
+    }
+    const pending = this.outbox;
+    this.outbox = [];
+    for (const msg of pending) {
+      this.ws.send(JSON.stringify(msg));
+    }
+    this.emit('replayed', pending.length);
   }
 
   /**

@@ -11,7 +11,16 @@ export function emptyState(): NemiState {
 export function applyServerMessage(state: NemiState, msg: ServerMessage): NemiState {
   switch (msg.type) {
     case 'hello':
-      return structuredClone(msg.state);
+      // Adopt the Brain's world *in place*. Callers hold a long-lived reference
+      // to `state` (the extension's mirror, and every view that reads from it),
+      // so returning a fresh object here would leave them all staring at the
+      // empty state they started with. The message arrived over a socket, so
+      // its contents are already a private, freshly parsed object graph.
+      state.users = msg.state.users;
+      state.sessions = msg.state.sessions;
+      state.lanes = msg.state.lanes;
+      state.memories = msg.state.memories;
+      break;
     case 'presence':
       state.users = msg.users;
       break;

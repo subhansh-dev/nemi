@@ -96,6 +96,36 @@ Brain travels inside it, so a fresh install starts a local one on port 4877 with
 extra setup. Install it with `code --install-extension nemi-0.0.1.vsix`, or through
 **Extensions → ⋯ → Install from VSIX…**.
 
+## Verifying it
+
+```
+npm run smoke
+```
+
+This is the honest answer to "does it actually work". It builds nothing you have to
+trust: it starts a real Brain on port 4878 against a throwaway directory, drives it
+with real websocket clients that apply the same reducer the extension uses, and
+checks 89 assertions across two suites.
+
+`scripts/smoke.mjs` covers the Brain and the client: two clients seeing each other,
+a session arriving with its creator's lane, prompting someone else's lane routing to
+its owner, streamed deltas assembling into one agent message, files-touched landing
+on the session, the roster, memory pins, state surviving a restart, token auth
+refusing a wrong token with close code 4003, refusing to bind `0.0.0.0` without a
+token, actions held while the Brain is away and delivered on rejoin, and the exact
+minified bundle the `.vsix` ships starting up and speaking the protocol.
+
+`scripts/smoke-git.mjs` bundles `extension/src/git.ts` with esbuild — the real module,
+not a copy — and runs it against throwaway repositories: slug folding, refusing to
+isolate a repository that has no commits yet (git would happily hand you an *empty*
+worktree there), creating a worktree that holds your files and starts from your HEAD,
+keeping `.nemi/` out of `git status` via `.git/info/exclude`, counting uncommitted
+change volume, and never calling a memory pin stale on a guess.
+
+What it still does not cover: the VS Code window itself (webview rendering) and live
+turns against the three agent CLIs. Those need a machine with room for the editor and
+a node agent at once, so they stay manual.
+
 ## Commands
 
 | Command | What it does |
@@ -130,13 +160,16 @@ Works: multiple windows sharing sessions, live lane streaming, per-lane provider
 switching, memories, a roster you can build before a teammate joins, auto-start of the
 Brain, state surviving restarts, optional worktree isolation per session, token auth for
 a Brain that lives on the network, and a self-contained `.vsix` that installs with the
-Brain already inside it.
+Brain already inside it. Nemi keeps its own `.nemi/` directory out of your `git status`
+without touching your tracked `.gitignore`, and anything you do while the socket is
+briefly down is held and delivered when it comes back rather than dropped.
 
 Rough edges: no per-user accounts (the token is a single shared secret, identity is
 still just a name, and a roster entry only links to a person once they connect under
 the handle you added), no mid-turn steering, transcripts cap at 400 messages per lane,
 and the adapter parsers carry fallback branches because provider event schemas shift
-between releases.
+between releases. The editor-side path — webview rendering, and turns against the real
+agent CLIs — is the part that has not been run yet.
 
 Not built yet: viewer role, approval cards for gated actions, file-overlap warnings,
 usage-limit handoffs. The order is in [docs/ROADMAP.md](docs/ROADMAP.md).

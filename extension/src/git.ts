@@ -33,9 +33,53 @@ export interface Worktree {
 }
 
 /**
+ * Makes sure `.nemi/` is ignored by this repository, without touching a single
+ * tracked file. The entry goes into `.git/info/exclude` — the repository-local
+ * ignore file — so the user's own `.gitignore` stays theirs and nothing Nemi
+ * does ever shows up in a diff or an accidental commit. Returns true when the
+ * file was changed, false when the exclusion was already there.
+ */
+export async function ensureNemiExcluded(repoDir: string): Promise<boolean> {
+  try {
+    const { stdout } = await run('git', ['rev-parse', '--git-path', 'info/exclude'], {
+      cwd: repoDir,
+    });
+    const reported = stdout.trim();
+    if (!reported) {
+      return false;
+    }
+    const excludePath = path.isAbsolute(reported) ? reported : path.join(repoDir, reported);
+    let existing = '';
+    try {
+      existing = fs.readFileSync(excludePath, 'utf8');
+    } catch {
+      // No exclude file yet; one will be written below.
+    }
+    const already = existing
+      .split(/\r?\n/)
+      .some((line) => line.trim() === '.nemi/' || line.trim() === '.nemi');
+    if (already) {
+      return false;
+    }
+    const prefix = existing.length && !existing.endsWith('\n') ? '\n' : '';
+    fs.mkdirSync(path.dirname(excludePath), { recursive: true });
+    fs.appendFileSync(
+      excludePath,
+      `${prefix}\n# Nemi keeps its worktrees and metadata here.\n.nemi/\n`,
+    );
+    return true;
+  } catch {
+    // Not a repository, or git is unavailable. Lanes still run; the directory
+    // simply shows up as untracked, which is where we started.
+    return false;
+  }
+}
+
+/**
  * Creates an isolated worktree at `.nemi/worktrees/<slug>` on a fresh
  * `nemi/<slug>` branch, starting from the current HEAD. Throws when the
- * directory or branch already exists; callers decide how to recover.
+ * directory or branch already exists, when there is no commit to branch from,
+ * or when git refuses; callers decide how to recover.
  */
 export async function createWorktree(repoDir: string, slug: string): Promise<Worktree> {
   const branch = `nemi/${slug}`;
@@ -43,7 +87,17 @@ export async function createWorktree(repoDir: string, slug: string): Promise<Wor
   if (fs.existsSync(worktreePath)) {
     throw new Error(`a worktree already exists at .nemi/worktrees/${slug}`);
   }
+  // On a repository with no commits, `git worktree add` does not fail — it
+  // quietly produces an *orphan* worktree, an empty directory holding none of
+  // the project. An agent dropped in there would be working on nothing at all,
+  // so stop here and let the caller offer the working tree instead.
+  if (!(await headCommit(repoDir))) {
+    throw new Error(
+      'this repository has no commits yet, so an isolated copy would start empty',
+    );
+  }
   fs.mkdirSync(path.dirname(worktreePath), { recursive: true });
+  await ensureNemiExcluded(repoDir);
   await run('git', ['worktree', 'add', '-b', branch, worktreePath], { cwd: repoDir });
   return { path: worktreePath, branch };
 }

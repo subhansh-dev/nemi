@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { portFromEnv, type ProviderID, type ServerMessage } from '@nemi/shared';
 import { PROVIDERS, PROVIDER_ORDER } from './agents';
 import { BrainClient } from './brainClient';
-import { createWorktree, isGitRepo, slugify } from './git';
+import { createWorktree, ensureNemiExcluded, isGitRepo, slugify } from './git';
 import { BrainView } from './views/brainView';
 import { MissionControlView } from './views/missionControl';
 import { SessionViews } from './views/sessionView';
@@ -28,6 +28,15 @@ export function activate(ctx: vscode.ExtensionContext): void {
   const running = new Map<string, AbortController>();
   /** Open the session panel for the next session I create. */
   let openNextCreated = false;
+
+  // The Brain keeps its state and any isolated worktrees under `.nemi/`. Keep
+  // that out of the user's `git status` and diffs — repository-locally, so
+  // their tracked .gitignore is never touched.
+  void (async () => {
+    if (await isGitRepo(workspaceDir)) {
+      await ensureNemiExcluded(workspaceDir);
+    }
+  })();
 
   /* --------------------------- lane execution --------------------------- */
 
@@ -279,6 +288,13 @@ export function activate(ctx: vscode.ExtensionContext): void {
     { dispose: () => client.stop() },
     client.sub('fatal', (err: Error) => {
       void vscode.window.showWarningMessage(`Nemi: ${err.message}`);
+    }),
+    client.sub('replayed', (count: number) => {
+      void vscode.window.showInformationMessage(
+        `Nemi: reconnected to the Brain and delivered ${count} action${
+          count === 1 ? '' : 's'
+        } held while it was away.`,
+      );
     }),
     client.sub('message', (msg: ServerMessage) => {
       if (msg.type === 'lane.execute') {

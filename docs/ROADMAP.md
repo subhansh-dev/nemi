@@ -2,9 +2,13 @@
 
 ## v0 — "one machine, one session, live"
 
-Written and building cleanly; not yet exercised end to end. The runtime checks are
-deliberately deferred until there is headroom on the dev machine, so treat the boxes
-below as "code complete", not "proven".
+The server side is exercised end to end now: `npm run smoke` starts a real Brain
+against a throwaway directory and drives it with real websocket clients. It covers the
+protocol, routing, the client reducer, persistence across a restart, token auth, the
+network-bind guard, the git helpers, the outbox, and the exact minified bundle the
+`.vsix` ships (89 assertions, all green). Still unproven: the VS Code window itself
+(webview rendering) and live turns against the three agent CLIs — both need a machine
+with room for an editor and a node agent at the same time.
 
 - [x] Repo scaffold, protocol, docs
 - [x] Brain server: sessions, lanes, presence, memories, persistence
@@ -24,6 +28,11 @@ below as "code complete", not "proven".
 - [x] Memories pinned to files and commits, with advisory stale flagging via git
 - [x] Files-touched tracking per lane, aggregated per session and shown in the panel
 - [x] Diff gutter in Mission Control (change volume per isolated session worktree)
+- [x] `npm run smoke`: end-to-end checks for the Brain, the client reducer, the git
+      helpers and the packaged bundle — and the three bugs it turned up on the way
+      (a client never adopting the world in `hello`, an isolated lane being handed an
+      empty worktree in a repository with no commits, actions dropped silently while
+      the socket was down)
 - [x] .vsix packaging, self-contained (the Brain ships inside the package)
 - [ ] Publishing it somewhere: needs a publisher account, a PNG icon and a version bump
 

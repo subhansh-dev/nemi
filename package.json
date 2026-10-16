@@ -13,6 +13,7 @@
     "build": "npm run build --workspace shared && npm run build --workspace server && npm run build --workspace extension",
     "brain": "npm run start --workspace server",
     "package:vsix": "node scripts/package-vsix.mjs",
+    "smoke": "node scripts/smoke.mjs && node scripts/smoke-git.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "allowScripts": {
