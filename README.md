@@ -104,8 +104,9 @@ npm run smoke
 
 This is the honest answer to "does it actually work". It builds nothing you have to
 trust: it starts a real Brain on port 4878 against a throwaway directory, drives it
-with real websocket clients that apply the same reducer the extension uses, and
-checks 89 assertions across two suites.
+with real websocket clients that apply the same reducer the extension uses, runs the
+real git helpers against throwaway repositories, and runs the real agent adapters
+against stand-in CLIs. 124 assertions across three suites.
 
 `scripts/smoke.mjs` covers the Brain and the client: two clients seeing each other,
 a session arriving with its creator's lane, prompting someone else's lane routing to
@@ -122,9 +123,25 @@ worktree there), creating a worktree that holds your files and starts from your 
 keeping `.nemi/` out of `git status` via `.git/info/exclude`, counting uncommitted
 change volume, and never calling a memory pin stale on a guess.
 
-What it still does not cover: the VS Code window itself (webview rendering) and live
-turns against the three agent CLIs. Those need a machine with room for the editor and
-a node agent at once, so they stay manual.
+`scripts/smoke-agents.mjs` is the one that guards against the CLIs moving under us. It
+puts stand-in `claude`, `codex` and `opencode` wrappers first on `PATH`, records the
+argv and stdin each adapter hands them, and replays recorded output shaped like each
+provider's real stream. So it checks what the parsers read *and* the rule the whole
+design rests on: the prompt travels over stdin, never on a command line. The test
+prompt is deliberately hostile — quotes, `&`, `$(whoami)`, `del /f /q *`, CJK — and
+the assertions confirm it arrives byte for byte over stdin with none of it in argv.
+Provider flags were also checked against the installed CLIs' own `--help`.
+
+That suite has already paid for itself. It caught a parser that read `session_id`
+while current OpenCode builds stamp every event with `sessionID`, which meant OpenCode
+lanes never learned their session and could never resume. Along with that fix came two
+smaller ones there: failed runs now report the reason from the event payload instead
+of just an exit code, and tool use is announced in the transcript like the other two
+providers. The other bugs this exercise found are listed in `docs/ROADMAP.md`.
+
+What it still does not cover: the VS Code window itself (webview rendering), and a
+live turn against the installed CLIs with a real model behind them. Those need a
+machine with room for an editor and a node agent at once, so they stay manual.
 
 ## Commands
 

@@ -9,10 +9,13 @@ import {
 } from './util';
 
 /**
- * OpenCode adapter. `opencode run` is non-interactive; `--session` resumes
- * (or creates) a named session, `--auto` approves permissions that are not
- * explicitly denied, and `--format json` emits structured output. The parser
- * accepts both JSONL part streaming and a single final JSON document.
+ * OpenCode adapter. `opencode run` is non-interactive; it reads the prompt from
+ * stdin whenever stdin is not a TTY (see its `run` command: with no message
+ * argument it falls back to piped input). `--session` resumes (or creates) a
+ * session, `--auto` approves permissions that are not explicitly denied, and
+ * `--format json` emits one JSON event per line. The parser accepts both the
+ * current event shape (`sessionID`, `{type:'text', part:{...}}`) and the older
+ * snake_case one.
  */
 export const opencodeProvider: AgentProvider = {
   id: 'opencode',
@@ -26,7 +29,9 @@ export const opencodeProvider: AgentProvider = {
     const child = spawnCli('opencode', args, opts.cwd, opts.signal);
     const stderr = collectStderr(child);
     let sawText = false;
+    let sawError = false;
     const seenParts = new Set<string>();
+    const seenTools = new Set<string>();
 
     const emit = (text: string, key?: string) => {
       if (key) {
@@ -39,9 +44,29 @@ export const opencodeProvider: AgentProvider = {
       opts.onEvent({ type: 'text', text });
     };
 
+    /** Reports the first failure only; a failed turn often says it twice. */
+    const fail = (message: string) => {
+      if (sawError) {
+        return;
+      }
+      sawError = true;
+      opts.onEvent({ type: 'error', message });
+    };
+
     const handleObject = (obj: Record<string, any>) => {
-      if (typeof obj.session_id === 'string') {
-        opts.onEvent({ type: 'session', id: obj.session_id });
+      // Current builds stamp every event with `sessionID`; older ones used
+      // `session_id`. Without this the lane never learns which session it is
+      // in, so `--session` is never passed and every turn starts over.
+      const sessionId = obj.sessionID ?? obj.session_id;
+      if (typeof sessionId === 'string') {
+        opts.onEvent({ type: 'session', id: sessionId });
+      }
+      // A failed run reports itself as an ordinary event and exits non-zero, so
+      // the real reason is in the payload rather than on stderr.
+      if (obj.type === 'error') {
+        const message = obj.error?.message;
+        fail(typeof message === 'string' && message ? message : 'opencode reported an error');
+        return;
       }
       const parts = Array.isArray(obj.parts) ? obj.parts : obj.part ? [obj.part] : [];
       for (const part of parts) {
@@ -49,6 +74,17 @@ export const opencodeProvider: AgentProvider = {
         if (p?.type === 'text' && typeof p.text === 'string') {
           emit(p.text, p.id ? String(p.id) : undefined);
         } else if (p?.type === 'tool') {
+          const key = p.id ? String(p.id) : undefined;
+          if (key) {
+            if (seenTools.has(key)) {
+              continue;
+            }
+            seenTools.add(key);
+          }
+          opts.onEvent({
+            type: 'text',
+            text: `\n› ${typeof p.tool === 'string' ? p.tool : 'tool'}\n`,
+          });
           const input = (p.state?.input ?? p.input ?? {}) as Record<string, unknown>;
           const candidate = input.filePath ?? input.file_path ?? input.path;
           if (typeof candidate === 'string') {
@@ -71,14 +107,11 @@ export const opencodeProvider: AgentProvider = {
     feedPrompt(child, opts.prompt);
     const code = await exitPromise(child);
 
-    // Some versions print one final JSON blob instead of streaming parts;
-    // if nothing streamed, the collected output was already consumed line by
+    // Some versions print one final JSON blob instead of streaming parts; if
+    // nothing streamed, the collected output was already consumed line by
     // line, so only surface an error here.
-    if (code !== 0 && code !== null && !sawText) {
-      opts.onEvent({
-        type: 'error',
-        message: stderr.slice(-5).join('\n') || `opencode exited with code ${code}`,
-      });
+    if (code !== 0 && code !== null && !sawText && !sawError) {
+      fail(stderr.slice(-5).join('\n') || `opencode exited with code ${code}`);
     }
   },
 };
