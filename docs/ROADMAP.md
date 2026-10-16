@@ -14,7 +14,7 @@ below as "code complete", not "proven".
 - [x] Brain view: shared memories
 - [x] Auto-start Brain from the extension
 
-## v1 — "shared for real" (current)
+## v1 — "shared for real" (complete)
 
 - [x] Auth token (`--token` / `NEMI_TOKEN`) and network binding (`--host` / `NEMI_HOST`),
       with non-loopback binds refused unless a token is set
@@ -27,7 +27,7 @@ below as "code complete", not "proven".
 - [x] .vsix packaging, self-contained (the Brain ships inside the package)
 - [ ] Publishing it somewhere: needs a publisher account, a PNG icon and a version bump
 
-## v2 — "steering and safety"
+## v2 — "steering and safety" (current)
 
 - [ ] Mid-turn steering (append guidance to a running lane)
 - [ ] Take over a stalled turn, resume on your account
