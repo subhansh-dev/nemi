@@ -91,7 +91,12 @@ export interface NemiState {
 /* ------------------------------------------------------------------ */
 
 export type ClientMessage =
-  | { type: 'identify'; name: string }
+  | {
+      type: 'identify';
+      name: string;
+      /** Shared secret, when the Brain was started with a token. */
+      token?: string;
+    }
   /** A user prompt for a lane they own. Server routes execution to owner. */
   | { type: 'lane.message'; sessionId: string; laneId: string; content: string }
   /** Owner streaming agent output back for broadcast. */

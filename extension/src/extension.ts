@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { ProviderID, ServerMessage } from '@nemi/shared';
+import { portFromEnv, type ProviderID, type ServerMessage } from '@nemi/shared';
 import { PROVIDERS, PROVIDER_ORDER } from './agents';
 import { BrainClient } from './brainClient';
 import { BrainView } from './views/brainView';
@@ -9,7 +9,13 @@ import { SessionViews } from './views/sessionView';
 export function activate(ctx: vscode.ExtensionContext): void {
   const workspaceDir =
     vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
-  const client = new BrainClient(undefined, workspaceDir);
+  const cfg = vscode.workspace.getConfiguration('nemi');
+  const client = new BrainClient({
+    port: cfg.get<number>('port') || portFromEnv(process.env),
+    token: cfg.get<string>('token') || process.env.NEMI_TOKEN || '',
+    brainUrl: cfg.get<string>('brainUrl') || '',
+    workspaceDir,
+  });
   const mission = new MissionControlView(client, ctx.extensionUri);
   const sessions = new SessionViews(client, ctx.extensionUri);
   const brain = new BrainView(client);
@@ -175,6 +181,12 @@ export function activate(ctx: vscode.ExtensionContext): void {
       ) {
         openNextCreated = false;
         sessions.open(msg.session.id);
+      }
+    }),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      // Port, remote URL or token changed — re-join under the new settings.
+      if (e.affectsConfiguration('nemi')) {
+        void client.restart();
       }
     }),
     vscode.commands.registerCommand('nemi.newSession', newSession),

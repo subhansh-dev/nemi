@@ -38,6 +38,26 @@
         }
       ]
     },
+    "configuration": {
+      "title": "Nemi",
+      "properties": {
+        "nemi.port": {
+          "type": "number",
+          "default": 4877,
+          "description": "Port for the local Brain (coordination server)."
+        },
+        "nemi.brainUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Connect to a Brain someone else runs instead of starting a local one, for example ws://10.0.0.5:4877. Leave empty to run the Brain on this machine."
+        },
+        "nemi.token": {
+          "type": "string",
+          "default": "",
+          "description": "Shared secret when the Brain requires one (started with a token, or bound to a network address). Leave empty for a local, open Brain."
+        }
+      }
+    },
     "commands": [
       {
         "command": "nemi.newSession",

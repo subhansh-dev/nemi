@@ -14,6 +14,7 @@ import {
   type ServerMessage,
   type Session,
 } from '@nemi/shared';
+import { timingSafeEqual } from './auth';
 import type { Store } from './store';
 
 interface Conn {
@@ -49,7 +50,11 @@ type NemiStateUsers = Record<string, NemiUser & { connected: boolean }>;
 export class Hub {
   private conns = new Map<string, Conn[]>();
 
-  constructor(private readonly store: Store) {}
+  constructor(
+    private readonly store: Store,
+    /** When set, every client must present this secret in `identify`. */
+    private readonly token = '',
+  ) {}
 
   /* ------------------------------ helpers ------------------------------ */
 
@@ -109,6 +114,10 @@ export class Hub {
       }
       if (parsed.type === 'identify') {
         if (user) {
+          return;
+        }
+        if (this.token && !timingSafeEqual(parsed.token ?? '', this.token)) {
+          socket.close(4003, 'unauthorized');
           return;
         }
         clearTimeout(identifyTimer);

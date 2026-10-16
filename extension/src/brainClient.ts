@@ -8,7 +8,6 @@ import WebSocket from 'ws';
 import {
   applyServerMessage,
   emptyState,
-  portFromEnv,
   type ClientMessage,
   type NemiState,
   type NemiUser,
@@ -17,6 +16,17 @@ import {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+export interface BrainOptions {
+  /** Local port used when no remote Brain URL is configured. */
+  port: number;
+  /** Shared secret, when the Brain requires one. */
+  token?: string;
+  /** Connect to a remote Brain instead of starting a local one. */
+  brainUrl?: string;
+  /** Directory the local Brain keeps its state beside. */
+  workspaceDir: string;
 }
 
 /**
@@ -30,20 +40,38 @@ export class BrainClient extends EventEmitter {
   you: NemiUser | null = null;
   connected = false;
 
+  private readonly port: number;
+  private readonly token: string;
+  private readonly brainUrl: string;
+  private readonly workspaceDir: string;
   private ws: WebSocket | null = null;
   private brainProc: ChildProcess | null = null;
   private closed = false;
 
-  constructor(
-    private readonly port: number = portFromEnv(process.env),
-    private readonly workspaceDir: string,
-  ) {
+  constructor(options: BrainOptions) {
     super();
+    this.port = options.port;
+    this.token = options.token?.trim() ?? '';
+    this.brainUrl = options.brainUrl?.trim() ?? '';
+    this.workspaceDir = options.workspaceDir;
+  }
+
+  get isRemote(): boolean {
+    return this.brainUrl !== '';
+  }
+
+  get wsUrl(): string {
+    return this.brainUrl || `ws://127.0.0.1:${this.port}`;
   }
 
   /* ------------------------------ lifecycle ----------------------------- */
 
   async start(): Promise<void> {
+    if (this.isRemote) {
+      // Someone else runs the Brain; just connect.
+      this.connect();
+      return;
+    }
     if (await this.health()) {
       this.connect();
       return;
@@ -56,7 +84,7 @@ export class BrainClient extends EventEmitter {
         return;
       }
     }
-    this.emit('fatal', new Error(`Nemi Brain did not answer on :${this.port}`));
+    this.emit('fatal', new Error(`Nemi Brain did not answer on port ${this.port}`));
   }
 
   stop(): void {
@@ -65,7 +93,7 @@ export class BrainClient extends EventEmitter {
     this.brainProc?.kill();
   }
 
-  /** Restart the local Brain process and reconnect. */
+  /** Restart the local Brain (or reconnect to a remote one) and re-join. */
   async restart(): Promise<void> {
     this.closed = true;
     this.ws?.close();
@@ -74,14 +102,21 @@ export class BrainClient extends EventEmitter {
       this.brainProc.kill();
       this.brainProc = null;
     }
-    await new Promise((r) => setTimeout(r, 400));
+    await sleep(400);
     this.closed = false;
     await this.start();
   }
 
+  private httpBase(): string {
+    if (!this.brainUrl) {
+      return `http://127.0.0.1:${this.port}`;
+    }
+    return this.brainUrl.replace(/^ws/, 'http').replace(/\/+$/, '');
+  }
+
   private health(): Promise<boolean> {
     return new Promise((resolve) => {
-      const req = http.get(`http://127.0.0.1:${this.port}/health`, { timeout: 900 }, (res) => {
+      const req = http.get(`${this.httpBase()}/health`, { timeout: 900 }, (res) => {
         resolve(res.statusCode === 200);
         res.resume();
       });
@@ -105,11 +140,15 @@ export class BrainClient extends EventEmitter {
     if (!serverPath) {
       throw new Error('Nemi Brain entry not found; run `npm run build` first.');
     }
-    this.brainProc = spawn(
-      'node',
-      [serverPath, '--port', String(this.port), '--dir', this.workspaceDir],
-      { stdio: 'ignore', detached: false, windowsHide: true },
-    );
+    const args = [serverPath, '--port', String(this.port), '--dir', this.workspaceDir];
+    if (this.token) {
+      args.push('--token', this.token);
+    }
+    this.brainProc = spawn('node', args, {
+      stdio: 'ignore',
+      detached: false,
+      windowsHide: true,
+    });
     this.brainProc.on('error', (err) => this.emit('fatal', err));
   }
 
@@ -119,12 +158,18 @@ export class BrainClient extends EventEmitter {
     if (this.closed) {
       return;
     }
-    const ws = new WebSocket(`ws://127.0.0.1:${this.port}`);
+    const ws = new WebSocket(this.wsUrl);
     this.ws = ws;
 
     ws.on('open', () => {
       const name = os.userInfo().username || process.env.USERNAME || 'guest';
-      ws.send(JSON.stringify({ type: 'identify', name } satisfies ClientMessage));
+      ws.send(
+        JSON.stringify({
+          type: 'identify',
+          name,
+          token: this.token || undefined,
+        } satisfies ClientMessage),
+      );
     });
 
     ws.on('message', (raw: Buffer) => {
@@ -146,12 +191,24 @@ export class BrainClient extends EventEmitter {
       this.emit('state');
     });
 
-    ws.on('close', () => {
+    ws.on('close', (code: number, reason: Buffer) => {
       if (this.ws === ws) {
         this.ws = null;
       }
       this.connected = false;
       this.emit('connected', false);
+      // 4003 = the Brain refused our token. Retrying would loop forever.
+      if (code === 4003) {
+        this.closed = true;
+        this.emit(
+          'fatal',
+          new Error(
+            `Brain rejected the connection (${reason.toString().trim() || 'unauthorized'}). ` +
+              'Set the nemi.token setting to match the Brain, then run "Nemi: Restart Local Brain".',
+          ),
+        );
+        return;
+      }
       if (!this.closed) {
         setTimeout(() => this.connect(), 2000).unref();
       }
