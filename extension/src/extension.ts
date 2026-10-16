@@ -1,7 +1,9 @@
+import fs from 'node:fs';
 import * as vscode from 'vscode';
 import { portFromEnv, type ProviderID, type ServerMessage } from '@nemi/shared';
 import { PROVIDERS, PROVIDER_ORDER } from './agents';
 import { BrainClient } from './brainClient';
+import { createWorktree, isGitRepo, slugify } from './git';
 import { BrainView } from './views/brainView';
 import { MissionControlView } from './views/missionControl';
 import { SessionViews } from './views/sessionView';
@@ -59,6 +61,14 @@ export function activate(ctx: vscode.ExtensionContext): void {
     let lastFlush = 0;
     let error: string | undefined;
 
+    // An isolated session runs inside its own worktree when that worktree
+    // exists on this machine; otherwise fall back to the open folder.
+    const session = client.state.sessions[sessionId];
+    const cwd =
+      session?.worktreePath && fs.existsSync(session.worktreePath)
+        ? session.worktreePath
+        : workspaceDir;
+
     const flush = (force = false): void => {
       const now = Date.now();
       if (buffer && (force || now - lastFlush > 120)) {
@@ -70,7 +80,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
 
     try {
       await PROVIDERS[providerId].run({
-        cwd: workspaceDir,
+        cwd,
         prompt: content,
         resumeId: lane.providerSessionId,
         signal: ac.signal,
@@ -114,8 +124,56 @@ export function activate(ctx: vscode.ExtensionContext): void {
     if (!task?.trim()) {
       return;
     }
+
+    // Sessions can work in the tree you already have open, or in a fresh
+    // worktree on their own branch so parallel sessions cannot collide.
+    let branch: string | null = null;
+    let worktreePath: string | null = null;
+    if (await isGitRepo(workspaceDir)) {
+      const choices: (vscode.QuickPickItem & { isolated: boolean })[] = [
+        {
+          label: '$(files) This working tree',
+          detail: 'Run the session where your folder already points.',
+          isolated: false,
+        },
+        {
+          label: '$(git-branch) New worktree on its own branch',
+          detail: 'Isolate the session so two of them never edit the same files.',
+          isolated: true,
+        },
+      ];
+      const pick = await vscode.window.showQuickPick(choices, {
+        placeHolder: 'Where should this session work?',
+      });
+      if (!pick) {
+        return;
+      }
+      if (pick.isolated) {
+        try {
+          const worktree = await createWorktree(workspaceDir, slugify(title));
+          branch = worktree.branch;
+          worktreePath = worktree.path;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          const anyway = await vscode.window.showWarningMessage(
+            `Could not create a worktree: ${message}`,
+            'Run in this tree anyway',
+          );
+          if (!anyway) {
+            return;
+          }
+        }
+      }
+    }
+
     openNextCreated = true;
-    client.send({ type: 'session.create', title: title.trim(), task: task.trim() });
+    client.send({
+      type: 'session.create',
+      title: title.trim(),
+      task: task.trim(),
+      branch,
+      worktreePath,
+    });
   }
 
   async function openSession(idArg?: string): Promise<void> {

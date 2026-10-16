@@ -57,6 +57,8 @@ export interface Session {
   task: string;
   /** Branch this session works on, if isolation is enabled. */
   branch: string | null;
+  /** Isolated git worktree for this session, when one was requested. */
+  worktreePath?: string | null;
   status: SessionStatus;
   plan: PlanItem[];
   laneIds: string[];
@@ -105,7 +107,13 @@ export type ClientMessage =
   | { type: 'lane.sessionId'; laneId: string; providerSessionId: string }
   | { type: 'lane.status'; laneId: string; status: LaneStatus; error?: string }
   | { type: 'lane.cancel'; laneId: string }
-  | { type: 'session.create'; title: string; task: string; branch?: string | null }
+  | {
+      type: 'session.create';
+      title: string;
+      task: string;
+      branch?: string | null;
+      worktreePath?: string | null;
+    }
   | { type: 'session.update'; id: string; patch: Partial<Pick<Session, 'title' | 'task' | 'status'>> }
   | { type: 'session.plan.set'; id: string; plan: PlanItem[] }
   | { type: 'session.remove'; id: string }

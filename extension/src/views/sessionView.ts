@@ -7,6 +7,7 @@ import { htmlShell } from './html';
 const BODY = `
 <div class="head">
   <h1 id="title">Session</h1>
+  <span id="branch" class="pill done"></span>
   <span id="presence" class="users"></span>
   <span id="status" class="pill live">live</span>
 </div>

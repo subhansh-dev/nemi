@@ -174,6 +174,7 @@ export class Hub {
           title: msg.title.trim() || 'Untitled session',
           task: msg.task,
           branch: msg.branch ?? null,
+          worktreePath: msg.worktreePath ?? null,
           status: 'live',
           plan: [],
           laneIds: [],

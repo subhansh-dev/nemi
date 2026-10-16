@@ -54,6 +54,7 @@ function render(): void {
               ${esc(u?.name ?? '?')} · ${esc(l.provider ?? 'no agent')}${l.status === 'running' ? ' ▸' : ''}
             </span>`;
           }).join('')}
+          ${s.branch ? `<span class="chip">⎇ ${esc(s.branch)}</span>` : ''}
           ${s.filesTouched.length ? `<span class="chip">${s.filesTouched.length} file${s.filesTouched.length > 1 ? 's' : ''}</span>` : ''}
           <span class="users">
             ${[...participants].map((uid) => {

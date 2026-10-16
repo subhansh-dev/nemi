@@ -3,6 +3,7 @@ import type { PlanItem, ProviderID, ServerMessage } from '@nemi/shared';
 const BODY = `
 <div class="head">
   <h1 id="title">Session</h1>
+  <span id="branch" class="pill done"></span>
   <span id="presence" class="users"></span>
   <span id="status" class="pill live">live</span>
 </div>
@@ -68,6 +69,7 @@ function providerName(id: string | null): string {
 
 function render(): void {
   const titleEl = document.getElementById('title')!;
+  const branchEl = document.getElementById('branch')!;
   const statusEl = document.getElementById('status')!;
   const presenceEl = document.getElementById('presence')!;
   const planEl = document.getElementById('plan')!;
@@ -76,6 +78,7 @@ function render(): void {
   const session = sessionId ? state.sessions[sessionId] : null;
   if (!session) {
     titleEl.textContent = 'Session';
+    branchEl.style.display = 'none';
     statusEl.style.display = 'none';
     planEl.innerHTML = '';
     lanesEl.innerHTML = '<div class="empty" style="margin:auto">This session has ended.</div>';
@@ -85,6 +88,13 @@ function render(): void {
   statusEl.textContent = session.status.replace('-', ' ');
   statusEl.className = `pill ${session.status}`;
   statusEl.style.display = '';
+
+  if (session.branch) {
+    branchEl.textContent = `⎇ ${session.branch}`;
+    branchEl.style.display = '';
+  } else {
+    branchEl.style.display = 'none';
+  }
 
   presenceEl.innerHTML = Object.values(state.users)
     .map((u) => `<span class="udot${u.connected ? '' : ' off'}" style="background:${u.color}" title="${esc(u.name)}"></span>`)

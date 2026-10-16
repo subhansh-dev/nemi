@@ -63,8 +63,28 @@ State lives in `.nemi/state.json` next to the workspace, written atomically with
 250ms debounce. If the Brain is unreachable, lanes keep working solo and the
 extension reconnects on its own. Coordination enhances the work; it never blocks it.
 
-## Security (current state)
+## Isolation
 
-The Brain binds to 127.0.0.1 and has no auth. That is acceptable for one machine and
-not acceptable for a team server — a shared deployment needs the token auth from the
-roadmap before it should see a network.
+A session can run in its own git worktree instead of the folder you have open:
+
+- worktree lives at `.nemi/worktrees/<slug>` (git-ignored, like the rest of `.nemi/`)
+- branch is `nemi/<slug>`, cut from the current HEAD
+- every lane in that session runs with the worktree as its working directory
+
+Machines that never created the worktree simply fall back to the folder they have
+open, so a teammate joining an isolated session is never blocked. Deleting a session
+does not touch git — merging or discarding the branch stays your call.
+
+## Security
+
+The Brain binds to `127.0.0.1` by default and needs no secret there. Bind it to a
+network address and it refuses to start unless you supply a token:
+
+```sh
+npm run brain -- --host 0.0.0.0 --token "$(openssl rand -hex 24)"
+```
+
+Clients present the token in `identify`; `/api/state` accepts it as a bearer token.
+`/health` stays open so probes keep working. There are no per-user accounts yet — the
+token is one shared secret and identity is still just a username, so treat a shared
+Brain as roughly trusted-network software until per-user auth lands.

@@ -30,6 +30,10 @@ the owner, so you learn who is who without reading names.
 
 **Plans** — a checklist per session, shared. Checkboxes move for everyone at once.
 
+**Isolation** — a session can run in its own git worktree on a `nemi/<name>` branch,
+so two sessions can never quietly edit the same files. Untick the box and it runs in
+the folder you already have open.
+
 **Brain** — shared memory in three flavors: decisions, gotchas, conventions. Add one from
 the command palette (`Nemi: Add Brain Memory`), see them grouped in the sidebar. It is
 deliberately small. This is not a notes app.
@@ -100,24 +104,37 @@ Code extension is on the other end; anything that can open a websocket can be a 
 ## What works today, honestly
 
 Works: multiple windows sharing sessions, live lane streaming, per-lane provider
-switching, memories, auto-start of the Brain, state surviving restarts.
+switching, memories, auto-start of the Brain, state surviving restarts, optional
+worktree isolation per session, and token auth for a Brain that lives on the network.
 
-Rough edges: no auth on the Brain (it binds 127.0.0.1 and that is the whole security
-model for now), no mid-turn steering, no git worktree isolation per session,
-transcripts cap at 400 messages per lane, and the adapter parsers carry fallback
-branches because provider event schemas shift between releases.
+Rough edges: no per-user accounts (the token is a single shared secret, and identity is
+still just a username), no mid-turn steering, transcripts cap at 400 messages per lane,
+and the adapter parsers carry fallback branches because provider event schemas shift
+between releases.
 
 Not built yet: viewer role, approval cards for gated actions, file-overlap warnings,
 usage-limit handoffs. The order is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Configuration
 
-| Env var | Default | Meaning |
-| --- | --- | --- |
-| `NEMI_PORT` | 4877 | Brain port |
+Settings (VS Code):
 
-`GET /health` answers liveness. `GET /api/state` dumps the current state, which is
-handy when debugging with curl.
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `nemi.port` | 4877 | Port for the local Brain |
+| `nemi.brainUrl` | *(empty)* | Join a Brain someone else runs, e.g. `ws://10.0.0.5:4877` |
+| `nemi.token` | *(empty)* | Shared secret when the Brain requires one |
+
+Environment variables (standalone `npm run brain`):
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `NEMI_PORT` | 4877 | Port to listen on |
+| `NEMI_HOST` | 127.0.0.1 | Address to bind; anything non-loopback **requires** a token |
+| `NEMI_TOKEN` | *(empty)* | Shared secret clients must present |
+
+`GET /health` answers liveness and stays open. `GET /api/state` needs the bearer token
+when one is set, which is handy for debugging with curl.
 
 ## License
 
