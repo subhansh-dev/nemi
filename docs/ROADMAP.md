@@ -24,7 +24,8 @@ below as "code complete", not "proven".
 - [x] Memories pinned to files and commits, with advisory stale flagging via git
 - [x] Files-touched tracking per lane, aggregated per session and shown in the panel
 - [x] Diff gutter in Mission Control (change volume per isolated session worktree)
-- [ ] .vsix packaging + marketplace-style install
+- [x] .vsix packaging, self-contained (the Brain ships inside the package)
+- [ ] Publishing it somewhere: needs a publisher account, a PNG icon and a version bump
 
 ## v2 — "steering and safety"
 

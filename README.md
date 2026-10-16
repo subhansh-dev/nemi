@@ -84,6 +84,18 @@ Open the folder in VS Code and press F5. That launches an Extension Development 
 and the Nemi icon appears in the activity bar. The Brain starts itself on first use;
 you never run it by hand. If you do want it standalone: `npm run brain`, port 4877.
 
+### Package it as a .vsix
+
+```
+npm run package:vsix
+```
+
+That builds every workspace, bundles the Brain into the extension, and writes
+`nemi-0.0.1.vsix` at the repo root — about 50 KB. The package is self-contained: the
+Brain travels inside it, so a fresh install starts a local one on port 4877 with no
+extra setup. Install it with `code --install-extension nemi-0.0.1.vsix`, or through
+**Extensions → ⋯ → Install from VSIX…**.
+
 ## Commands
 
 | Command | What it does |
@@ -91,7 +103,10 @@ you never run it by hand. If you do want it standalone: `npm run brain`, port 48
 | `Nemi: New Session` | title + task; creates the session and your lane |
 | `Nemi: Open Session` | quick-pick a live session |
 | `Nemi: Add Lane to Session` | another person/agent column |
-| `Nemi: Add Brain Memory` | decision / gotcha / convention |
+| `Nemi: Add Brain Memory` | decision / gotcha / convention, optionally pinned to a file |
+| `Nemi: Remove Memory` | drop a memory (also on the tree item) |
+| `Nemi: Add Teammate to Roster` | add someone by handle before they ever connect |
+| `Nemi: Copy Invite to Clipboard` | the settings a teammate needs to join |
 | `Nemi: Restart Local Brain` | kill and restart the server |
 
 ## Repo layout
@@ -100,6 +115,7 @@ you never run it by hand. If you do want it standalone: `npm run brain`, port 48
 shared/      protocol types + state reducer, imported by both sides
 server/      the Brain — node:http + ws, persists to .nemi/state.json
 extension/   the VS Code side: webviews, provider adapters, lane execution
+scripts/     the .vsix packer
 docs/        architecture, features, roadmap, branding
 ```
 
@@ -112,8 +128,9 @@ Code extension is on the other end; anything that can open a websocket can be a 
 
 Works: multiple windows sharing sessions, live lane streaming, per-lane provider
 switching, memories, a roster you can build before a teammate joins, auto-start of the
-Brain, state surviving restarts, optional worktree isolation per session, and token
-auth for a Brain that lives on the network.
+Brain, state surviving restarts, optional worktree isolation per session, token auth for
+a Brain that lives on the network, and a self-contained `.vsix` that installs with the
+Brain already inside it.
 
 Rough edges: no per-user accounts (the token is a single shared secret, identity is
 still just a name, and a roster entry only links to a person once they connect under

@@ -1,0 +1,11 @@
+# Only built output and assets ship. Sources, configs and the dev toolchain stay
+# out of the package.
+src/**
+node_modules/**
+*.mjs
+*.map
+tsconfig.json
+.gitignore
+.vscodeignore
+.vscode/**
+**/*.ts

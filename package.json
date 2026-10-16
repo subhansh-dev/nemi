@@ -12,9 +12,13 @@
   "scripts": {
     "build": "npm run build --workspace shared && npm run build --workspace server && npm run build --workspace extension",
     "brain": "npm run start --workspace server",
+    "package:vsix": "node scripts/package-vsix.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "allowScripts": {
     "esbuild@0.24.2": true
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^4.0.0"
   }
 }
