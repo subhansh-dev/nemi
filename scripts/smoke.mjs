@@ -407,6 +407,41 @@ try {
   );
   check('a memory can be removed', !!removed && bob.state.memories.length === 0);
 
+  section('a session can be taken down');
+  const temporary = await roundTrip(
+    alice,
+    (m) => m.type === 'session.upsert' && m.session.title === 'temporary',
+    'the temporary session',
+    () => alice.send({ type: 'session.create', title: 'temporary', task: 'created only to be removed' }),
+  );
+  check('it arrives with a lane of its own', !!temporary && temporary.session.laneIds.length === 1);
+  if (!temporary) {
+    throw new Error('the temporary session never arrived');
+  }
+  const doomedId = temporary.session.id;
+  const gone = await roundTrip(
+    bob,
+    (m) => m.type === 'session.remove' && m.id === doomedId,
+    'the session to be removed',
+    () => alice.send({ type: 'session.remove', id: doomedId }),
+  );
+  check('removing it from one client removes it for the others', !!gone);
+  // The reducer runs just after waiters settle, and the sender's own copy only
+  // updates when the broadcast comes back, so wait on state rather than arrival.
+  const vanished = await until(
+    () =>
+      !alice.state.sessions[doomedId] &&
+      !bob.state.sessions[doomedId] &&
+      temporary.session.laneIds.every((id) => !alice.state.lanes[id] && !bob.state.lanes[id]),
+    5000,
+  );
+  check('it is gone from every client', vanished && !bob.state.sessions[doomedId]);
+  check(
+    'its lanes went with it',
+    temporary.session.laneIds.every((id) => !alice.state.lanes[id] && !bob.state.lanes[id]),
+  );
+  check('the session it was not asked to remove is untouched', !!bob.state.sessions[sessionId]);
+
   section('persistence survives a restart');
   await sleep(500); // let the debounced write land
   check('the state file is written', existsSync(stateFile));

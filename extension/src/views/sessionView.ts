@@ -72,6 +72,11 @@ export class SessionViews implements vscode.Disposable {
     }
   }
 
+  /** Closes the panel for a session, if it is open — e.g. once it is removed. */
+  close(sessionId: string): void {
+    this.panels.get(sessionId)?.dispose();
+  }
+
   open(sessionId: string): void {
     const existing = this.panels.get(sessionId);
     if (existing) {

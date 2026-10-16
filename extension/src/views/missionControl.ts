@@ -19,6 +19,9 @@ const CSS = `
 .card { margin: 10px 12px; padding: 10px 12px; background: var(--deep); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
 .card:hover { border-color: rgba(45,212,191,.45); }
 .card .title { font-weight: 600; margin-bottom: 2px; }
+.card .kill { opacity: 0; color: var(--fog); font-size: 12px; line-height: 1; padding: 2px 5px; border-radius: 6px; cursor: pointer; transition: opacity .12s ease; }
+.card:hover .kill { opacity: .5; }
+.card .kill:hover { opacity: 1; color: var(--coral); background: rgba(244,114,182,.1); }
 .card .task { color: var(--fog); font-size: 12px; margin: 4px 0 8px; line-height: 1.45; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
 .chip { font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--fog); }
@@ -116,6 +119,11 @@ export class MissionControlView implements vscode.WebviewViewProvider {
       case 'openSession':
         if (m.id) {
           void vscode.commands.executeCommand('nemi.openSession', m.id);
+        }
+        break;
+      case 'removeSession':
+        if (m.id) {
+          void vscode.commands.executeCommand('nemi.removeSession', m.id);
         }
         break;
       case 'invite':

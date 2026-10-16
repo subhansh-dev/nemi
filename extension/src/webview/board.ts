@@ -59,6 +59,7 @@ function render(): void {
         <div style="display:flex;align-items:center;gap:8px">
           <span class="title">${esc(s.title)}</span>
           <span style="flex:1"></span>
+          <span class="kill" data-remove="${s.id}" title="Remove this session for everyone">✕</span>
           <span class="pill ${s.status}">${s.status.replace('-', ' ')}</span>
         </div>
         <div class="task">${esc(s.task.slice(0, 160))}${s.task.length > 160 ? '…' : ''}</div>
@@ -140,6 +141,12 @@ window.addEventListener('message', (event) => {
 });
 
 document.addEventListener('click', (e) => {
+  // Checked before the card, because the remove affordance sits inside it.
+  const remove = (e.target as HTMLElement).closest<HTMLElement>('[data-remove]');
+  if (remove) {
+    vscodeApi.postMessage({ type: 'removeSession', id: remove.dataset.remove });
+    return;
+  }
   const card = (e.target as HTMLElement).closest<HTMLElement>('[data-open]');
   if (card) {
     vscodeApi.postMessage({ type: 'openSession', id: card.dataset.open });

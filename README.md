@@ -106,14 +106,15 @@ This is the honest answer to "does it actually work". It builds nothing you have
 trust: it starts a real Brain on port 4878 against a throwaway directory, drives it
 with real websocket clients that apply the same reducer the extension uses, runs the
 real git helpers against throwaway repositories, and runs the real agent adapters
-against stand-in CLIs. 124 assertions across three suites.
+against stand-in CLIs. 129 assertions across three suites.
 
 `scripts/smoke.mjs` covers the Brain and the client: two clients seeing each other,
 a session arriving with its creator's lane, prompting someone else's lane routing to
 its owner, streamed deltas assembling into one agent message, files-touched landing
 on the session, the roster, memory pins, state surviving a restart, token auth
 refusing a wrong token with close code 4003, refusing to bind `0.0.0.0` without a
-token, actions held while the Brain is away and delivered on rejoin, and the exact
+token, actions held while the Brain is away and delivered on rejoin, a session taken
+down for everyone (lanes and transcript included), and the exact
 minified bundle the `.vsix` ships starting up and speaking the protocol.
 
 `scripts/smoke-git.mjs` bundles `extension/src/git.ts` with esbuild — the real module,
@@ -149,6 +150,7 @@ machine with room for an editor and a node agent at once, so they stay manual.
 | --- | --- |
 | `Nemi: New Session` | title + task; creates the session and your lane |
 | `Nemi: Open Session` | quick-pick a live session |
+| `Nemi: Remove Session` | take a session down for everyone (asks first; a worktree on disk stays put) |
 | `Nemi: Add Lane to Session` | another person/agent column |
 | `Nemi: Add Brain Memory` | decision / gotcha / convention, optionally pinned to a file |
 | `Nemi: Remove Memory` | drop a memory (also on the tree item) |

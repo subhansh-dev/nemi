@@ -77,6 +77,10 @@
         "title": "Nemi: Open Session"
       },
       {
+        "command": "nemi.removeSession",
+        "title": "Nemi: Remove Session"
+      },
+      {
         "command": "nemi.addLane",
         "title": "Nemi: Add Lane to Session"
       },

@@ -6,7 +6,7 @@ The server side is exercised end to end now: `npm run smoke` starts a real Brain
 against a throwaway directory and drives it with real websocket clients. It covers the
 protocol, routing, the client reducer, persistence across a restart, token auth, the
 network-bind guard, the git helpers, the outbox, the agent adapters against stand-in
-CLIs, and the exact minified bundle the `.vsix` ships (124 assertions, all green).
+CLIs, and the exact minified bundle the `.vsix` ships (129 assertions, all green).
 Still unproven: the VS Code window itself (webview rendering) and a live turn against
 the installed CLIs with a real model behind them — both need a machine with room for
 an editor and a node agent at the same time.
@@ -29,6 +29,9 @@ an editor and a node agent at the same time.
 - [x] Memories pinned to files and commits, with advisory stale flagging via git
 - [x] Files-touched tracking per lane, aggregated per session and shown in the panel
 - [x] Diff gutter in Mission Control (change volume per isolated session worktree)
+- [x] Taking a session down (command and a card affordance): the protocol, the Brain
+      and the reducer all handled `session.remove`, but nothing could actually send it,
+      so sessions were permanent
 - [x] `npm run smoke`: end-to-end checks for the Brain, the client reducer, the git
       helpers, the agent adapters and the packaged bundle — and the four bugs it turned
       up on the way (a client never adopting the world in `hello`, an isolated lane

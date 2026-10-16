@@ -209,6 +209,44 @@ export function activate(ctx: vscode.ExtensionContext): void {
     }
   }
 
+  /**
+   * Takes a session down for everyone. The Brain drops its lanes with it; any
+   * worktree on disk is deliberately left alone, because that is where the work
+   * still lives. Confirmed first — there is no undo.
+   */
+  async function removeSession(idArg?: string): Promise<void> {
+    let id = typeof idArg === 'string' ? idArg : undefined;
+    if (!id) {
+      const live = Object.values(client.state.sessions);
+      const pick = await vscode.window.showQuickPick(
+        live.map((s) => ({ label: s.title, description: s.status, id: s.id })),
+        { placeHolder: 'Remove which session?' },
+      );
+      if (!pick) {
+        return;
+      }
+      id = pick.id;
+    }
+    const session = client.state.sessions[id];
+    if (!session) {
+      return;
+    }
+    const count = session.laneIds.length;
+    const answer = await vscode.window.showWarningMessage(
+      `Remove “${session.title}” for everyone? Its ${count} lane${
+        count === 1 ? '' : 's'
+      } and the whole transcript go with it. A worktree on disk is left where it is.`,
+      { modal: true },
+      'Remove',
+    );
+    if (answer !== 'Remove') {
+      return;
+    }
+    sessions.close(id);
+    client.send({ type: 'session.remove', id });
+    void vscode.window.showInformationMessage(`Nemi: removed “${session.title}”.`);
+  }
+
   async function addLane(sessionArg?: string): Promise<void> {
     let sessionId = typeof sessionArg === 'string' ? sessionArg : undefined;
     if (!sessionId) {
@@ -326,6 +364,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand('nemi.newSession', newSession),
     vscode.commands.registerCommand('nemi.openSession', openSession),
+    vscode.commands.registerCommand('nemi.removeSession', removeSession),
     vscode.commands.registerCommand('nemi.addLane', addLane),
     vscode.commands.registerCommand('nemi.inviteMember', inviteMember),
     vscode.commands.registerCommand('nemi.copyInvite', copyInvite),
