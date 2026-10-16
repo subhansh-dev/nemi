@@ -1,0 +1,20 @@
+{
+  "name": "nemi",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "description": "Nemi — the multiplayer AI IDE for teams and their agents.",
+  "workspaces": [
+    "shared",
+    "server",
+    "extension"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace shared && npm run build --workspace server && npm run build --workspace extension",
+    "brain": "npm run start --workspace server",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "allowScripts": {
+    "esbuild@0.24.2": true
+  }
+}

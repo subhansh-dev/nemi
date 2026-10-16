@@ -1,0 +1,104 @@
+{
+  "name": "nemi",
+  "displayName": "Nemi",
+  "description": "The multiplayer AI IDE — your team and its agents, one session.",
+  "version": "0.0.1",
+  "publisher": "nemi",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "nemi",
+          "title": "Nemi — Mission Control",
+          "icon": "assets/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "nemi": [
+        {
+          "id": "nemi.missionControl",
+          "name": "Mission Control"
+        },
+        {
+          "id": "nemi.brain",
+          "name": "Brain"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "nemi.newSession",
+        "title": "Nemi: New Session"
+      },
+      {
+        "command": "nemi.openSession",
+        "title": "Nemi: Open Session"
+      },
+      {
+        "command": "nemi.addLane",
+        "title": "Nemi: Add Lane to Session"
+      },
+      {
+        "command": "nemi.addMemory",
+        "title": "Nemi: Add Brain Memory"
+      },
+      {
+        "command": "nemi.removeMemory",
+        "title": "Nemi: Remove Memory"
+      },
+      {
+        "command": "nemi.restartBrain",
+        "title": "Nemi: Restart Local Brain"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "nemi.newSession",
+          "when": "view == nemi.missionControl",
+          "group": "navigation"
+        },
+        {
+          "command": "nemi.addMemory",
+          "when": "view == nemi.brain",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "nemi.removeMemory",
+          "when": "view == nemi.brain && viewItem == nemiMemory",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nemi/shared": "*",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}
