@@ -48,6 +48,27 @@ This is not a notes app.
 **Three agents** — Claude Code, Codex, OpenCode. Pick one per lane, switch whenever.
 They sit side by side; nothing forces the team onto a single vendor.
 
+## Look and feel
+
+Nemi draws its own chrome instead of borrowing a VS Code theme, so Mission Control,
+session panels and the Brain tree look the same on every machine and in light or dark
+editors alike. The palette is near-black and warm-neutral: layered surfaces (`#08080A`
+page, `#101014` panel, `#17171C` raised), warm off-white text, and one muted brass
+accent for the few things that should catch your eye. State colours are desaturated on
+purpose — a running lane, a diff, a teammate's colour are meant to be read, not to
+glow. Neon was never the point; the point is that after four hours in it your eyes
+still work.
+
+Member colours are muted too, and they follow a rule: all eight clear WCAG AA on the
+black page, and no two members share one. Text tokens are held to the same bar, and
+`scripts/check-ui.mjs` re-derives that arithmetic from the palette on every
+`npm run smoke` — the theme is the one part of a UI a test can honestly cover. To look
+at it without opening an editor:
+
+```
+npm run ui:preview     # writes .nemi/ui-preview.html from the real stylesheets
+```
+
 ## How a turn works
 
 You type a prompt in your lane and hit Enter.
@@ -105,8 +126,8 @@ npm run smoke
 This is the honest answer to "does it actually work". It builds nothing you have to
 trust: it starts a real Brain on port 4878 against a throwaway directory, drives it
 with real websocket clients that apply the same reducer the extension uses, runs the
-real git helpers against throwaway repositories, and runs the real agent adapters
-against stand-in CLIs. 129 assertions across three suites.
+real git helpers against throwaway repositories, runs the real agent adapters against
+stand-in CLIs, and re-derives the theme's contrast. 160 assertions across four suites.
 
 `scripts/smoke.mjs` covers the Brain and the client: two clients seeing each other,
 a session arriving with its creator's lane, prompting someone else's lane routing to
@@ -140,9 +161,20 @@ smaller ones there: failed runs now report the reason from the event payload ins
 of just an exit code, and tool use is announced in the transcript like the other two
 providers. The other bugs this exercise found are listed in `docs/ROADMAP.md`.
 
-What it still does not cover: the VS Code window itself (webview rendering), and a
-live turn against the installed CLIs with a real model behind them. Those need a
-machine with room for an editor and a node agent at once, so they stay manual.
+`scripts/check-ui.mjs` covers the part of a UI that can be checked without rendering
+it, which is more than it sounds. The webviews are styled by hand-written CSS, where a
+mistyped custom property is completely silent — the declaration is dropped and a label
+inherits whatever colour was behind it. So this suite reads the real sources and
+asserts that every `var(--token)` a view reaches for is defined, that each stylesheet
+is brace-balanced, and that every colour meant to be read clears WCAG AA against the
+surface it lands on, compositing the translucent fills over their backdrop first. The
+member palette is held to the same bar. It caught `--alert` sitting at 4.61:1 on its
+own pill — legal, but one nudge away from not being.
+
+What it still does not cover: how the webviews actually paint (the theme's arithmetic
+is checked, but nobody has watched it render), and a live turn against the installed
+CLIs with a real model behind them. Those need a machine with room for an editor and a
+node agent at once, so they stay manual.
 
 ## Commands
 
@@ -164,7 +196,7 @@ machine with room for an editor and a node agent at once, so they stay manual.
 shared/      protocol types + state reducer, imported by both sides
 server/      the Brain — node:http + ws, persists to .nemi/state.json
 extension/   the VS Code side: webviews, provider adapters, lane execution
-scripts/     the .vsix packer
+scripts/     the .vsix packer, the smoke suites and the theme checker
 docs/        architecture, features, roadmap, branding
 ```
 
@@ -187,8 +219,10 @@ Rough edges: no per-user accounts (the token is a single shared secret, identity
 still just a name, and a roster entry only links to a person once they connect under
 the handle you added), no mid-turn steering, transcripts cap at 400 messages per lane,
 and the adapter parsers carry fallback branches because provider event schemas shift
-between releases. The editor-side path — webview rendering, and turns against the real
-agent CLIs — is the part that has not been run yet.
+between releases. The webviews also ignore your editor's colour theme on purpose, so
+Nemi looks the same on every machine — which means a very light editor gets a very
+dark sidebar. The editor-side path — how the webviews actually paint, and turns
+against the real agent CLIs — is the part that has not been run yet.
 
 Not built yet: viewer role, approval cards for gated actions, file-overlap warnings,
 usage-limit handoffs. The order is in [docs/ROADMAP.md](docs/ROADMAP.md).

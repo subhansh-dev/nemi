@@ -1,33 +1,64 @@
 import * as vscode from 'vscode';
 
+/**
+ * The one palette every webview shares.
+ *
+ * A near-black, warm-neutral theme: layered surfaces sink away from the
+ * reader, one muted brass accent carries identity, and state colours (ok,
+ * alert) stay desaturated so nothing glows at you. Text tokens are held to
+ * WCAG AA against the surfaces they sit on — `scripts/check-ui.mjs` re-derives
+ * that arithmetic from this block on every `npm run smoke`, so a "small"
+ * colour tweak cannot quietly make a label unreadable.
+ */
 const BASE_CSS = `
 :root {
-  --abyss: #0B1F2A; --deep: #12303F; --card: #16394B;
-  --teal: #2DD4BF; --coral: #FF7E67; --mist: #E6F2F3; --fog: #8FACB3;
-  --border: rgba(45, 212, 191, 0.14);
+  color-scheme: dark;
+  --page: #08080A; --surface: #101014; --raised: #17171C; --raised-2: #1E1E24;
+  --line: rgba(255,255,255,.075); --line-strong: rgba(255,255,255,.13);
+  --text: #EDEAE4; --muted: #8E8B84;
+  --accent: #C6A87C; --accent-weak: rgba(198,168,124,.12);
+  --accent-edge: rgba(198,168,124,.22); --accent-line: rgba(198,168,124,.38);
+  --ok: #8FA98F; --ok-weak: rgba(143,169,143,.14);
+  --alert: #D4887A; --alert-weak: rgba(212,136,122,.15);
+  --alert-line: rgba(212,136,122,.45);
+  --radius: 10px;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0; padding: 0;
-  background: var(--abyss); color: var(--mist);
-  font-family: var(--vscode-font-family, system-ui, sans-serif);
-  font-size: 13px;
+  background: var(--page); color: var(--text);
+  font-family: var(--vscode-font-family, system-ui, -apple-system, "Segoe UI", sans-serif);
+  font-size: 13px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
-.head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-.head h1 { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; margin: 0; color: var(--teal); font-weight: 600; flex: 1; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fog); display: inline-block; }
-.dot.live { background: var(--teal); box-shadow: 0 0 6px var(--teal); }
-.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
-.pill.live { background: rgba(45,212,191,.16); color: var(--teal); }
-.pill.done { background: rgba(143,172,179,.16); color: var(--fog); }
-.pill.awaiting-takeover { background: rgba(255,126,103,.18); color: var(--coral); }
+::selection { background: var(--accent-weak); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.09); border: 3px solid transparent;
+  background-clip: padding-box; border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.16); background-clip: padding-box; }
+.head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.head h1 { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; margin: 0; color: var(--accent); font-weight: 600; flex: 1; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.dot.live { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-weak); }
+.pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.pill.live { background: var(--ok-weak); color: var(--ok); }
+.pill.done { background: rgba(255,255,255,.05); color: var(--muted); }
+.pill.awaiting-takeover { background: var(--alert-weak); color: var(--alert); }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: rgba(255,255,255,.02); }
 button {
-  background: var(--card); color: var(--mist); border: 1px solid var(--border);
-  border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 12px;
+  background: var(--raised); color: var(--text); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 13px; cursor: pointer; font-size: 12px;
+  font-family: inherit;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
 }
-button:hover { border-color: var(--teal); color: var(--teal); }
-button.primary { background: rgba(45,212,191,.14); color: var(--teal); border-color: rgba(45,212,191,.4); }
-.empty { color: var(--fog); padding: 28px 16px; text-align: center; line-height: 1.6; }
+button:hover { background: var(--raised-2); border-color: var(--line-strong); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button.primary { background: var(--accent-weak); color: var(--accent); border-color: var(--accent-line); font-weight: 600; }
+button.primary:hover { background: rgba(198,168,124,.2); }
+.empty { color: var(--muted); padding: 32px 18px; text-align: center; line-height: 1.7; }
 `;
 
 /** Shared HTML shell for every Nemi webview. */

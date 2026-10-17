@@ -7,34 +7,33 @@ import { htmlShell } from './html';
 const BODY = `
 <div class="head">
   <h1>Mission Control</h1>
-  <span id="whoami" style="color:var(--fog);font-size:11px"></span>
+  <span id="whoami" style="color:var(--muted);font-size:11px"></span>
   <span id="conn" class="dot" title="Brain connection"></span>
 </div>
 <div id="roster" class="roster"></div>
 <div id="cards"></div>
-<div style="padding:12px"><button class="primary" id="new" style="width:100%">＋ New Session</button></div>
+<div style="padding:12px"><button class="primary" id="new" style="width:100%">+ New Session</button></div>
 `;
 
 const CSS = `
-.card { margin: 10px 12px; padding: 10px 12px; background: var(--deep); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
-.card:hover { border-color: rgba(45,212,191,.45); }
-.card .title { font-weight: 600; margin-bottom: 2px; }
-.card .kill { opacity: 0; color: var(--fog); font-size: 12px; line-height: 1; padding: 2px 5px; border-radius: 6px; cursor: pointer; transition: opacity .12s ease; }
-.card:hover .kill { opacity: .5; }
-.card .kill:hover { opacity: 1; color: var(--coral); background: rgba(244,114,182,.1); }
-.card .task { color: var(--fog); font-size: 12px; margin: 4px 0 8px; line-height: 1.45; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
-.chip { font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--fog); }
-.progress { height: 3px; border-radius: 2px; background: rgba(143,172,179,.18); margin-top: 8px; overflow: hidden; }
-.progress > div { height: 100%; background: var(--teal); }
+.card { margin: 10px 12px; padding: 12px 13px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; transition: border-color .14s ease, background .14s ease; }
+.card:hover { border-color: var(--line-strong); background: var(--raised); }
+.card .title { font-weight: 600; font-size: 13px; }
+.card .kill { opacity: 0; color: var(--muted); font-size: 12px; line-height: 1; padding: 2px 6px; border-radius: 6px; cursor: pointer; transition: opacity .12s ease, color .12s ease; }
+.card:hover .kill { opacity: .55; }
+.card .kill:hover { opacity: 1; color: var(--alert); background: var(--alert-weak); }
+.card .task { color: var(--muted); font-size: 12px; margin: 5px 0 9px; line-height: 1.5; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.progress { height: 3px; border-radius: 999px; background: rgba(255,255,255,.06); margin-top: 9px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); }
 .users { display: flex; gap: 4px; margin-left: auto; }
 .udot { width: 8px; height: 8px; border-radius: 50%; }
-.udot.off { opacity: .3; }
-.roster { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px 0; }
-.member { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; font-size: 11px; color: var(--mist); }
+.udot.off { opacity: .28; }
+.roster { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 10px 12px 0; }
+.member { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font-size: 11px; color: var(--text); background: rgba(255,255,255,.02); }
 .member.off { opacity: .45; }
-.member.invite { color: var(--teal); border-color: rgba(45,212,191,.35); cursor: pointer; }
-.member.invite:hover { background: rgba(45,212,191,.08); }
+.member.invite { color: var(--muted); border-style: dashed; cursor: pointer; }
+.member.invite:hover { color: var(--accent); border-color: var(--accent-line); }
 `;
 
 export class MissionControlView implements vscode.WebviewViewProvider {

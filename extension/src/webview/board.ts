@@ -19,7 +19,7 @@ function render(): void {
   const who = document.getElementById('whoami');
   if (who) {
     who.textContent = you ? you.name : '…';
-    who.setAttribute('style', `color:${you?.color ?? 'var(--fog)'}`);
+    who.setAttribute('style', `color:${you?.color ?? 'var(--muted)'}`);
   }
 
   const cards = document.getElementById('cards');
@@ -38,7 +38,7 @@ function render(): void {
             u.connected ? ' — connected' : ' — offline'
           }"><span class="udot" style="background:${esc(u.color)}"></span>${esc(u.name)}</span>`,
         )
-        .join('') + `<span class="member invite" data-invite>＋ invite</span>`;
+        .join('') + `<span class="member invite" data-invite>+ invite</span>`;
   }
 
   if (sessions.length === 0) {
@@ -66,13 +66,13 @@ function render(): void {
         <div class="chips">
           ${lanes.map((l) => {
             const u = state.users[l.ownerId];
-            return `<span class="chip" style="border-color:${u?.color ?? 'var(--border)'}55">
-              <span style="color:${u?.color ?? 'var(--fog)'}">●</span>
+            return `<span class="chip" style="border-color:${u?.color ? `${u.color}55` : 'rgba(255,255,255,.13)'}">
+              <span style="color:${u?.color ?? 'var(--muted)'}">●</span>
               ${esc(u?.name ?? '?')} · ${esc(l.provider ?? 'no agent')}${l.status === 'running' ? ' ▸' : ''}
             </span>`;
           }).join('')}
           ${s.branch ? `<span class="chip">⎇ ${esc(s.branch)}</span>` : ''}
-          ${diffs[s.id] ? `<span class="chip" title="uncommitted changes in this session's worktree"><span style="color:var(--teal)">+${diffs[s.id].insertions}</span> <span style="color:var(--coral)">−${diffs[s.id].deletions}</span> · ${diffs[s.id].files} file${diffs[s.id].files === 1 ? '' : 's'}</span>` : ''}
+          ${diffs[s.id] ? `<span class="chip" title="uncommitted changes in this session's worktree"><span style="color:var(--ok)">+${diffs[s.id].insertions}</span> <span style="color:var(--alert)">−${diffs[s.id].deletions}</span> · ${diffs[s.id].files} file${diffs[s.id].files === 1 ? '' : 's'}</span>` : ''}
           ${s.filesTouched.length ? `<span class="chip">${s.filesTouched.length} file${s.filesTouched.length > 1 ? 's' : ''}</span>` : ''}
           <span class="users">
             ${[...participants].map((uid) => {
@@ -82,7 +82,7 @@ function render(): void {
           </span>
         </div>
         ${s.plan.length ? `<div class="progress"><div style="width:${pct}%"></div></div>
-          <div style="color:var(--fog);font-size:10.5px;margin-top:4px">plan ${done}/${s.plan.length}${active ? ` · ${active} lane${active > 1 ? 's' : ''} running` : ''}</div>` : ''}
+          <div style="color:var(--muted);font-size:10.5px;margin-top:5px">plan ${done}/${s.plan.length}${active ? ` · ${active} lane${active > 1 ? 's' : ''} running` : ''}</div>` : ''}
       </div>`;
   }).join('');
 }

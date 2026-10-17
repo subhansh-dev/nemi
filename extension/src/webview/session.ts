@@ -72,10 +72,10 @@ function render(): void {
   const done = session.plan.filter((p) => p.done).length;
   planEl.innerHTML = `
     <div class="planbar">
-      <strong style="color:var(--mist);font-size:12px">Plan</strong>
+      <strong style="color:var(--text);font-size:12px">Plan</strong>
       <span>${done}/${session.plan.length}</span>
       <span style="flex:1"></span>
-      <input id="planadd" placeholder="Add step…" style="background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--mist);padding:3px 8px;font-size:11.5px;width:180px">
+      <input id="planadd" placeholder="Add step…" style="background:var(--raised);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:3px 8px;font-size:11.5px;width:180px">
     </div>
     ${session.plan.map((p) => `
       <label class="planitem${p.done ? ' done' : ''}">
@@ -89,7 +89,7 @@ function render(): void {
   const touched = session.filesTouched ?? [];
   filesEl.style.display = touched.length ? '' : 'none';
   filesEl.innerHTML = touched.length
-    ? `<span style="color:var(--fog)">files touched</span>${touched
+    ? `<span style="color:var(--muted)">files touched</span>${touched
         .slice(-12)
         .map((file) => `<span class="chip" title="${esc(file)}">${esc(shortPath(file))}</span>`)
         .join('')}`
@@ -114,7 +114,7 @@ function render(): void {
     return `
       <div class="lane${mine ? ' me' : ''}" data-lane="${lane.id}">
         <div class="lanehead">
-          <span class="udot" style="width:9px;height:9px;border-radius:50%;background:${owner?.color ?? '#8FACB3'}"></span>
+          <span class="udot" style="width:9px;height:9px;border-radius:50%;background:${owner?.color ?? 'var(--muted)'}"></span>
           <span class="who">${esc(owner?.name ?? 'unknown')}${mine ? ' (you)' : ''}</span>
           <span style="flex:1"></span>
           ${running ? '<span class="spin"></span>' : ''}
@@ -133,8 +133,8 @@ function render(): void {
       </div>`;
   }).join('') + `
     <div class="lane" style="min-width:150px;max-width:150px;align-items:center;justify-content:center;border-style:dashed">
-      <button class="iconbtn" id="addlane" style="font-size:20px" title="Add a lane">＋</button>
-      <div style="color:var(--fog);font-size:11px">add lane</div>
+      <button class="iconbtn" id="addlane" style="font-size:20px" title="Add a lane">+</button>
+      <div style="color:var(--muted);font-size:11px">add lane</div>
     </div>`;
 
   // Keep newest messages visible.

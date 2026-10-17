@@ -23,18 +23,26 @@ Tagline candidates:
 
 ## Palette
 
+Near-black and warm-neutral. One muted brass accent carries identity; state
+colours stay desaturated, because on a black page a saturated hue reads as neon.
+
 | Token | Hex | Use |
 | --- | --- | --- |
-| `--nemi-abyss` | `#0B1F2A` | deep background |
-| `--nemi-deep` | `#12303F` | panels / cards |
-| `--nemi-teal` | `#2DD4BF` | primary accent, links, live states |
-| `--nemi-coral` | `#FF7E67` | attention: approvals, takeover, errors |
-| `--nemi-mist` | `#E6F2F3` | primary text on dark |
-| `--nemi-fog` | `#8FACB3` | secondary text |
+| `--page` | `#08080A` | the page behind everything |
+| `--surface` | `#101014` | panels, session cards |
+| `--raised` | `#17171C` | raised: inputs, agent bubbles, buttons |
+| `--line` | `rgba(255,255,255,.075)` | hairline borders |
+| `--text` | `#EDEAE4` | primary text |
+| `--muted` | `#8E8B84` | secondary text |
+| `--accent` | `#C6A87C` | the one accent: headings, primary actions |
+| `--ok` | `#8FA98F` | live, connected, additions |
+| `--alert` | `#D4887A` | attention: takeover, errors, removals |
 
-Teal = the calm sea the name evokes; coral = the one thing you must look at.
-Lane identity colors are assigned from a fixed 8-color palette so every
-teammate has a stable hue across sessions.
+Every colour meant to be read clears WCAG AA on the surface it lands on, and
+`scripts/check-ui.mjs` re-derives that from this palette on each `npm run smoke`.
+Lane identity colours are assigned from a fixed eight-hue muted palette so every
+teammate has a stable hue across sessions; those hold to the same contrast rule,
+and no two members share one.
 
 ## Mark
 

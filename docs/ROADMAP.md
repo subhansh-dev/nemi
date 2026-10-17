@@ -6,10 +6,10 @@ The server side is exercised end to end now: `npm run smoke` starts a real Brain
 against a throwaway directory and drives it with real websocket clients. It covers the
 protocol, routing, the client reducer, persistence across a restart, token auth, the
 network-bind guard, the git helpers, the outbox, the agent adapters against stand-in
-CLIs, and the exact minified bundle the `.vsix` ships (129 assertions, all green).
-Still unproven: the VS Code window itself (webview rendering) and a live turn against
-the installed CLIs with a real model behind them — both need a machine with room for
-an editor and a node agent at the same time.
+CLIs, and the exact minified bundle the `.vsix` ships, plus the theme's contrast
+arithmetic (160 assertions, all green). Still unproven: how the webviews actually
+paint, and a live turn against the installed CLIs with a real model behind them — both
+need a machine with room for an editor and a node agent at the same time.
 
 - [x] Repo scaffold, protocol, docs
 - [x] Brain server: sessions, lanes, presence, memories, persistence
@@ -40,6 +40,25 @@ an editor and a node agent at the same time.
       where current builds emit `sessionID`, so those lanes could never resume)
 - [x] .vsix packaging, self-contained (the Brain ships inside the package)
 - [ ] Publishing it somewhere: needs a publisher account, a PNG icon and a version bump
+
+## House style (complete)
+
+- [x] One shared palette for all three webviews, replacing the original teal-on-navy
+      look with a near-black, warm-neutral surface stack and a single muted brass
+      accent: no neon, no glow, status colours desaturated, tighter type and spacing
+- [x] Muted member palette (eight hues, no saturates). The old set was chosen against
+      a bright background and reads as neon on black
+- [x] `scripts/check-ui.mjs` — undefined `var(--token)`s, unbalanced stylesheets, and
+      WCAG AA contrast for every readable colour and every member hue, compositing
+      translucent fills over their backdrop. It found `--alert` at 4.61:1 on its own
+      pill: legal, but one nudge from failing, so the hue was lightened
+- [x] `npm run ui:preview` writes a static page assembled from the real stylesheets, so
+      the theme can be reviewed without launching an editor (which matters on a 4 GB
+      machine)
+- [x] Fixed a latent bug the rewrite walked past: `border-color: var(--border)55` was
+      appending an alpha suffix to a custom property. That is not valid CSS, so the
+      declaration was dropped and lane chips quietly drew their border in the inherited
+      text colour instead of the owner's
 
 ## v2 — "steering and safety" (current)
 
