@@ -265,6 +265,41 @@ try {
     `${failed.events.filter((e) => e.type === 'error').length} errors`,
   );
 
+  section('a CLI that is not installed says so');
+  // The failure this guards against is silence. A command that cannot be found
+  // does not exit, so an adapter watching only exit codes reported nothing at
+  // all and the lane simply stopped, with no hint about why. On POSIX that is
+  // an ENOENT spawn error; on Windows the adapter goes through a shell, which
+  // exits non-zero and explains itself on stderr. Both must reach the lane.
+  const realPath = process.env.PATH;
+  const emptyBin = path.join(scratch, 'empty-bin');
+  mkdirSync(emptyBin, { recursive: true });
+  process.env.PATH = emptyBin;
+  try {
+    for (const id of ['claude', 'codex', 'opencode']) {
+      const events = [];
+      await PROVIDERS[id].run({
+        cwd: agentCwd,
+        prompt: PROMPT,
+        signal: new AbortController().signal,
+        onEvent: (event) => events.push(event),
+      });
+      const error = first(events, 'error');
+      check(
+        `${id} reports that its CLI could not be started`,
+        Boolean(error?.message),
+        JSON.stringify(events),
+      );
+      check(
+        `${id} names the command it could not find`,
+        Boolean(error?.message?.includes(id)),
+        error?.message ?? 'nothing was reported',
+      );
+    }
+  } finally {
+    process.env.PATH = realPath;
+  }
+
   section('resuming passes the id through');
   for (const [id, flag] of [
     ['claude', '--resume'],

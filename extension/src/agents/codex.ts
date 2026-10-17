@@ -86,8 +86,10 @@ export const codexProvider: AgentProvider = {
     });
 
     feedPrompt(child, opts.prompt);
-    const code = await exitPromise(child);
-    if (code !== 0 && code !== null && !sawText) {
+    const { code, spawnError } = await exitPromise(child);
+    if (spawnError) {
+      opts.onEvent({ type: 'error', message: spawnError });
+    } else if (code !== 0 && code !== null && !sawText) {
       opts.onEvent({
         type: 'error',
         message: stderr.slice(-5).join('\n') || `codex exited with code ${code}`,

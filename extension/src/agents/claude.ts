@@ -68,8 +68,10 @@ export const claudeProvider: AgentProvider = {
     });
 
     feedPrompt(child, opts.prompt);
-    const code = await exitPromise(child);
-    if (code !== 0 && code !== null) {
+    const { code, spawnError } = await exitPromise(child);
+    if (spawnError) {
+      opts.onEvent({ type: 'error', message: spawnError });
+    } else if (code !== 0 && code !== null) {
       opts.onEvent({
         type: 'error',
         message: stderr.slice(-5).join('\n') || `claude exited with code ${code}`,

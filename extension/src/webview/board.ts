@@ -50,6 +50,15 @@ function render(): void {
     const done = s.plan.filter((p) => p.done).length;
     const pct = s.plan.length ? Math.round((done / s.plan.length) * 100) : 0;
     const active = lanes.filter((l) => l.status === 'running').length;
+    // A lane that failed should be visible from the sidebar, with the reason,
+    // rather than only after opening the session and reading the transcript.
+    const failing = lanes.filter((l) => l.status === 'error');
+    const reason = failing[0]?.lastError ?? '';
+    const failure = failing.length
+      ? `<div class="failed" title="${esc(reason)}">✕ ${
+          failing.length === 1 ? 'a lane failed' : `${failing.length} lanes failed`
+        }${reason ? ` — ${esc(reason.slice(0, 150))}${reason.length > 150 ? '…' : ''}` : ''}</div>`
+      : '';
     const participants = new Set(lanes.map((l) => l.ownerId));
     if (s.createdBy) {
       participants.add(s.createdBy);
@@ -81,6 +90,7 @@ function render(): void {
             }).join('')}
           </span>
         </div>
+        ${failure}
         ${s.plan.length ? `<div class="progress"><div style="width:${pct}%"></div></div>
           <div style="color:var(--muted);font-size:10.5px;margin-top:5px">plan ${done}/${s.plan.length}${active ? ` · ${active} lane${active > 1 ? 's' : ''} running` : ''}</div>` : ''}
       </div>`;

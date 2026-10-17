@@ -40,6 +40,9 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .bubble.agent { background: var(--raised); border: 1px solid var(--line); }
 .bubble .meta { font-size: 9.5px; color: var(--muted); margin-bottom: 4px; letter-spacing: .09em; text-transform: uppercase; }
 .bubble.error { border-color: var(--alert-line); color: var(--alert); }
+.laneerror { border: 1px solid var(--alert-line); border-radius: 8px; padding: 8px 10px; background: var(--alert-weak); color: var(--alert); font-size: 12px; line-height: 1.5; }
+.laneerror .body { white-space: pre-wrap; word-break: break-word; }
+.laneerror .meta { font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 4px; opacity: .85; }
 .composer { display: flex; gap: 7px; padding: 10px; border-top: 1px solid var(--line); align-items: flex-end; }
 .composer textarea { flex: 1; resize: none; background: var(--raised); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-family: inherit; font-size: 12.5px; line-height: 1.5; min-height: 38px; max-height: 120px; }
 .composer textarea:focus { outline: none; border-color: var(--accent-line); }

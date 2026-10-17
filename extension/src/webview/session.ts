@@ -111,6 +111,11 @@ function render(): void {
         ? 'Agent is working…'
         : 'Ask your agent. Enter to send, Shift+Enter for newline.'
       : `Read-only — this is ${owner?.name ?? 'a teammate'}’s lane.`;
+    // Why the last turn stopped, where it stopped. Without this the reason the
+    // adapter went to the trouble of reporting never reached anyone.
+    const failure = lane.lastError
+      ? `<div class="laneerror"><div class="meta">last turn failed</div><span class="body">${esc(lane.lastError)}</span></div>`
+      : '';
     return `
       <div class="lane${mine ? ' me' : ''}" data-lane="${lane.id}">
         <div class="lanehead">
@@ -125,7 +130,7 @@ function render(): void {
           ${running ? `<button class="iconbtn" data-cancel="${lane.id}" title="Stop">✕</button>` : ''}
           ${!running && !mine ? `<button class="iconbtn" data-removelane="${lane.id}" title="Remove lane">🗑</button>` : ''}
         </div>
-        <div class="msgs" data-msgs="${lane.id}">${msgs || `<div class="empty">${mine ? 'Send the first prompt.' : 'Waiting for ' + esc(owner?.name ?? 'teammate')}…</div>`}</div>
+        <div class="msgs" data-msgs="${lane.id}">${msgs || `<div class="empty">${mine ? 'Send the first prompt.' : 'Waiting for ' + esc(owner?.name ?? 'teammate')}…</div>`}${failure}</div>
         <div class="composer">
           <textarea data-composer="${lane.id}" ${mine && !running ? '' : 'disabled'} placeholder="${esc(placeholder)}"></textarea>
           ${mine && !running ? `<button class="primary" data-send="${lane.id}">Send</button>` : ''}

@@ -23,6 +23,7 @@ const CSS = `
 .card:hover .kill { opacity: .55; }
 .card .kill:hover { opacity: 1; color: var(--alert); background: var(--alert-weak); }
 .card .task { color: var(--muted); font-size: 12px; margin: 5px 0 9px; line-height: 1.5; }
+.card .failed { color: var(--alert); font-size: 11px; margin-top: 7px; line-height: 1.45; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
 .progress { height: 3px; border-radius: 999px; background: rgba(255,255,255,.06); margin-top: 9px; overflow: hidden; }
 .progress > div { height: 100%; background: var(--accent); }

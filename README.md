@@ -92,6 +92,25 @@ turn is attributed to them, and the lane header still shows which account is bur
 - Node 20 or newer
 - At least one of `claude`, `codex`, or `opencode` on your PATH
 
+Everything Nemi needs is npm-installable, and nothing it does needs a GPU or a big
+machine. The only heavy moment is running the editor with a live agent inside it: that
+is an Electron window plus a Node agent, so give it around a gigabyte of headroom.
+Building, typechecking and the whole test suite stay well under that and run fine at
+4 GB.
+
+### On macOS
+
+Agents are launched by name, so the CLI has to be on the PATH of the process that
+started VS Code. An app launched from the Dock or Spotlight does not read your shell
+profile, which means `claude` in `~/.local/bin` or a global npm bin can be invisible to
+it even though it works in your terminal. Two ways out:
+
+- start the editor from a terminal (`code .`), which inherits your real PATH, or
+- put the CLI somewhere every process sees (`/usr/local/bin`).
+
+If Nemi still cannot find one, it says so in the lane, naming the command it looked
+for and this exact cause — it will not fail quietly.
+
 ## Install from source
 
 ```
@@ -127,7 +146,7 @@ This is the honest answer to "does it actually work". It builds nothing you have
 trust: it starts a real Brain on port 4878 against a throwaway directory, drives it
 with real websocket clients that apply the same reducer the extension uses, runs the
 real git helpers against throwaway repositories, runs the real agent adapters against
-stand-in CLIs, and re-derives the theme's contrast. 160 assertions across four suites.
+stand-in CLIs, and re-derives the theme's contrast. 168 assertions across four suites.
 
 `scripts/smoke.mjs` covers the Brain and the client: two clients seeing each other,
 a session arriving with its creator's lane, prompting someone else's lane routing to
@@ -154,6 +173,11 @@ prompt is deliberately hostile — quotes, `&`, `$(whoami)`, `del /f /q *`, CJK 
 the assertions confirm it arrives byte for byte over stdin with none of it in argv.
 Provider flags were also checked against the installed CLIs' own `--help`.
 
+It also covers the emptiest failure there is: an agent CLI that is not installed. A
+command that cannot be found never exits, so an adapter watching only exit codes had
+nothing to report and the lane just stopped. Now that case is asserted for all three
+providers — the message must arrive, and it must name the command.
+
 That suite has already paid for itself. It caught a parser that read `session_id`
 while current OpenCode builds stamp every event with `sessionID`, which meant OpenCode
 lanes never learned their session and could never resume. Along with that fix came two
@@ -169,7 +193,8 @@ asserts that every `var(--token)` a view reaches for is defined, that each style
 is brace-balanced, and that every colour meant to be read clears WCAG AA against the
 surface it lands on, compositing the translucent fills over their backdrop first. The
 member palette is held to the same bar. It caught `--alert` sitting at 4.61:1 on its
-own pill — legal, but one nudge away from not being.
+own pill — legal, but one nudge away from not being. It also guards the two places a
+failed lane is drawn, because a failure reason that nothing renders is just storage.
 
 What it still does not cover: how the webviews actually paint (the theme's arithmetic
 is checked, but nobody has watched it render), and a live turn against the installed

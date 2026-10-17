@@ -105,12 +105,14 @@ export const opencodeProvider: AgentProvider = {
     });
 
     feedPrompt(child, opts.prompt);
-    const code = await exitPromise(child);
+    const { code, spawnError } = await exitPromise(child);
 
     // Some versions print one final JSON blob instead of streaming parts; if
     // nothing streamed, the collected output was already consumed line by
     // line, so only surface an error here.
-    if (code !== 0 && code !== null && !sawText && !sawError) {
+    if (spawnError) {
+      fail(spawnError);
+    } else if (code !== 0 && code !== null && !sawText && !sawError) {
       fail(stderr.slice(-5).join('\n') || `opencode exited with code ${code}`);
     }
   },

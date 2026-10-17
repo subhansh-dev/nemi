@@ -261,6 +261,28 @@ for (const [name, css] of [
   );
 }
 
+/* ------------------------------- failures ------------------------------- */
+
+// A lane's failure reason is data until something renders it. It used to be
+// stored, persisted, broadcast, and never shown — so a lane could stop dead
+// and the UI would say nothing. The webviews are template strings, so the only
+// mechanical guard available is that the field is actually read where the two
+// views draw. Cheap, and it catches the deletion of exactly that line.
+section('failure reporting');
+const sessionSrc = readFileSync(path.join(SRC, 'webview', 'session.ts'), 'utf8');
+const boardSrc = readFileSync(path.join(SRC, 'webview', 'board.ts'), 'utf8');
+const countOf = (text, needle) => text.split(needle).length - 1;
+check(
+  'the session panel renders a failed lane\u2019s reason',
+  countOf(sessionSrc, 'lastError') >= 2,
+  `${countOf(sessionSrc, 'lastError')} references`,
+);
+check(
+  'mission control flags a failed lane',
+  countOf(boardSrc, 'lastError') >= 1,
+  `${countOf(boardSrc, 'lastError')} references`,
+);
+
 /* --------------------------- member palette ----------------------------- */
 
 const paletteSource = readFileSync(CONSTANTS_FILE, 'utf8');
@@ -430,6 +452,7 @@ body { display: block; height: auto; overflow: auto; padding: 22px; }
           <div class="msgs">
             <div class="bubble user"><div class="meta">prompt · Priya</div><span class="body">Write the spec first.</span></div>
             <div class="bubble agent"><div class="meta">codex</div><span class="body">Drafted test/limit.spec.ts with the three cases you listed.</span></div>
+            <div class="laneerror"><div class="meta">last turn failed</div><span class="body">could not find codex. Install it, and make sure the shell that started the editor can see it — on macOS an app launched from the Dock never reads your shell profile, so starting VS Code from a terminal usually fixes this.</span></div>
           </div>
           <div class="composer">
             <textarea disabled placeholder="Read-only — this is Priya’s lane."></textarea>

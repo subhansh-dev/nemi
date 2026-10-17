@@ -27,6 +27,10 @@ export function spawnCli(
 }
 
 export function feedPrompt(child: ChildProcessWithoutNullStreams, prompt: string): void {
+  // A CLI that failed to start tears its stdin down, and a write into that
+  // wreckage would surface as an unhandled stream error. The spawn failure is
+  // the real story, and exitPromise tells it.
+  child.stdin.on('error', () => {});
   child.stdin.write(prompt, 'utf8');
   child.stdin.end();
 }
@@ -67,9 +71,37 @@ export function tryJson(line: string): unknown {
   }
 }
 
-export function exitPromise(child: ChildProcessWithoutNullStreams): Promise<number | null> {
+export interface CliResult {
+  /** Exit code, or null when the process never started, or was killed. */
+  code: number | null;
+  /** Why it never started — a missing command, usually. Null when it ran. */
+  spawnError: string | null;
+}
+
+/** Turns a spawn failure into something the person in front of it can act on. */
+function describeSpawnError(err: NodeJS.ErrnoException): string {
+  const command = err.path || 'the agent command';
+  if (err.code === 'ENOENT') {
+    return `could not find \`${command}\`. Install it, and make sure the shell that started the editor can see it — on macOS an app launched from the Dock never reads your shell profile, so starting VS Code from a terminal usually fixes this.`;
+  }
+  if (err.code === 'EACCES') {
+    return `\`${command}\` is there but not executable (permission denied).`;
+  }
+  return `could not start \`${command}\`: ${err.message}`;
+}
+
+/**
+ * Waits for a spawned CLI to finish.
+ *
+ * A command that does not exist does not exit — node reports it through an
+ * `error` event with no exit code at all. So an adapter that only watched exit
+ * codes turned a missing CLI into a turn that ended silently: the lane went
+ * from running to idle and said nothing about why.
+ */
+export function exitPromise(child: ChildProcessWithoutNullStreams): Promise<CliResult> {
   return new Promise((resolve) => {
-    child.on('close', (code) => resolve(code));
-    child.on('error', () => resolve(null));
+    child.on('error', (err: NodeJS.ErrnoException) =>
+      resolve({ code: null, spawnError: describeSpawnError(err) }));
+    child.on('close', (code) => resolve({ code, spawnError: null }));
   });
 }

@@ -7,7 +7,7 @@ against a throwaway directory and drives it with real websocket clients. It cove
 protocol, routing, the client reducer, persistence across a restart, token auth, the
 network-bind guard, the git helpers, the outbox, the agent adapters against stand-in
 CLIs, and the exact minified bundle the `.vsix` ships, plus the theme's contrast
-arithmetic (160 assertions, all green). Still unproven: how the webviews actually
+arithmetic (168 assertions, all green). Still unproven: how the webviews actually
 paint, and a live turn against the installed CLIs with a real model behind them — both
 need a machine with room for an editor and a node agent at the same time.
 
@@ -59,6 +59,26 @@ need a machine with room for an editor and a node agent at the same time.
       appending an alpha suffix to a custom property. That is not valid CSS, so the
       declaration was dropped and lane chips quietly drew their border in the inherited
       text colour instead of the owner's
+
+## Portability
+
+- [x] The three adapters only ever reported an error for a non-zero exit code, but a
+      command that cannot be found never exits: node delivers it as a spawn `error` with
+      no code at all. So where the agent was not on the PATH — the usual macOS case,
+      since an app launched from the Dock never reads your shell profile — the lane went
+      from running to idle and said nothing about why. `exitPromise` now returns the
+      spawn failure too, and the message names the command and the likely cause
+- [x] A lane's failure is drawn, not merely stored. The reason was already in the state,
+      on the wire, and in the reducer; nothing had ever rendered it. The session panel
+      shows it where the agent stopped, and Mission Control flags it on the card
+- [x] Feed-prompt hardening: writing into a CLI whose stdin a failed spawn had already
+      torn down would have surfaced as an unhandled stream error
+- [x] Audited the rest instead of assuming, since "should work on your Mac" is not an
+      answer to give someone: `spawnCli` already used a shell only on Windows, the agent
+      suite already wrote both a `.cmd` shim and an executable POSIX one, the git helpers
+      never assumed a path separator, and the hooks already carried the executable bit in
+      the index. All four were checked, none needed changing
+- [ ] A per-provider CLI path override in settings, for when PATH games are not enough
 
 ## v2 — "steering and safety" (current)
 
